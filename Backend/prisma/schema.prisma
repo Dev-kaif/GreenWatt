@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String  @id @default(uuid())
+  email         String  @unique
+  passwordHash  String?
+  firstName     String?
+  lastName      String?
+  phoneNumber   String?
+  householdSize Int?
+
+  address String?
+  city    String?
+  state   String?
+  zipCode String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  readings    MeterReading[]
+  tips        EnergyTip[]
+  appliances  Appliance[]
+  userProfile UserProfile?
+}
+
+model UserProfile {
+  id              String  @id @default(uuid())
+  userId          String  @unique
+  user            User    @relation(fields: [userId], references: [id])
+  targetReduction Float?
+  ecoGoals        String?
+}
+
+model Appliance {
+  id                     String    @id @default(uuid())
+  userId                 String
+  user                   User      @relation(fields: [userId], references: [id])
+  type                   String
+  modelName              String?
+  ageYears               Int?
+  purchaseDate           DateTime?
+  energyStarRating       String?
+  powerConsumptionWatts  Float?
+  energyEfficiencyRating String?
+  averageDailyUsageHours Float?
+  capacity               String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MeterReading {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  readingDate DateTime
+
+  consumptionKWH Float
+
+  emissionCO2kg Float?
+
+  source String? @default("manual")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contextualEnergyTips EnergyTip[] @relation("TipContext")
+
+  @@unique([userId, readingDate])
+}
+
+model GeneralEnergyTip {
+  id          String  @id @default(uuid())
+  title       String
+  description String
+  category    String?
+  ecoLink     String?
+  imageUrl    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  personalizedTips EnergyTip[]
+}
+
+model EnergyTip {
+  id           String            @id @default(uuid())
+  userId       String
+  user         User              @relation(fields: [userId], references: [id])
+  generalTipId String?
+  generalTip   GeneralEnergyTip? @relation(fields: [generalTipId], references: [id])
+
+  tipText         String
+  relevanceScore  Float?
+  applicableMonth DateTime?
+  isDismissed     Boolean   @default(false)
+  isImplemented   Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contextReadingId String?
+  contextReading   MeterReading? @relation("TipContext", fields: [contextReadingId], references: [id])
+}
+
+model GlobalContent {
+  id          String   @id @default(uuid())
+  type        String
+  title       String?
+  content     String
+  source      String?
+  url         String?
+  publishedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AdminUser {
+  id    String @id @default(uuid())
+  email String @unique
+
+  passwordHash String
+  role         String @default("editor")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
