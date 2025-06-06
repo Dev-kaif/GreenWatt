@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { supabase } from '../config/supabaseCLient'; 
+import { Request, Response, NextFunction } from "express";
+import { supabase } from "../config/supabaseCLient";
 
 declare global {
   namespace Express {
@@ -12,22 +12,31 @@ declare global {
   }
 }
 
-export const protect = async (req: Request, res: Response, next: NextFunction) => {
+export const protect = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Authorization token required.' });
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    res.status(401).json({ message: "Authorization token required." });
+    return;
   }
 
-  const token = authHeader.split(' ')[1];
+  const token = authHeader.split(" ")[1];
 
   try {
     // Verify the token using Supabase
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
 
     if (error || !user) {
-      console.error('Auth verification error:', error?.message);
-      return res.status(401).json({ message: 'Invalid or expired token.' });
+      console.error("Auth verification error:", error?.message);
+      res.status(401).json({ message: "Invalid or expired token." });
+      return;
     }
 
     req.user = {
@@ -36,9 +45,14 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
     };
 
     next();
-
   } catch (error: any) {
-    console.error('Authentication error:', error);
-    return res.status(500).json({ message: 'Internal server error during authentication.', error: error.message });
+    console.error("Authentication error:", error);
+    res
+      .status(500)
+      .json({
+        message: "Internal server error during authentication.",
+        error: error.message,
+      });
+    return;
   }
 };

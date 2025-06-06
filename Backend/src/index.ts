@@ -1,6 +1,10 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes';
+import meterReadingRoutes from './routes/meterReadingRoutes';
+import userProfileRoutes from './routes/userProfileRoutes';
+import applianceRoutes from './routes/applianceRoutes';
+import energyTipRoutes from './routes/energyTipRoutes'; 
 
 dotenv.config();
 
@@ -9,13 +13,13 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware to parse JSON request bodies
 app.use(express.json());
+// app.use(cors())
 
-// Basic route to check if the server is running
-app.get('/', (req, res) => {
-  res.send('GreenWatt Backend API is running!');
-});
 
 app.use('/api/auth', authRoutes);
+app.use('/api/meter-readings', meterReadingRoutes);
+app.use('/api/profile', userProfileRoutes);
+app.use('/api/appliances', applianceRoutes);
+app.use('/api/energy-tips', energyTipRoutes); 
 
-// Start the server
 app.listen(PORT);
