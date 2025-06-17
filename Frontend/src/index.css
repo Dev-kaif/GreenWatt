@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+/* 1. Define raw CSS variables for values (fonts, color channels, radius, etc.) */
+:root {
+  --breakpoint-3xl: 120rem;
+
+  --radius: 0.75rem;
+
+  --font-sans: "Inter", system-ui, sans-serif;
+
+  --color-primary: #32C686;
+  --color-secondary: #0F3D3E;
+  --color-accent: #F6FFF8;
+  --color-text: #1F2937;
+
+  --ease-fluid: cubic-bezier(0.3, 0, 0, 1);
+  --ease-snappy: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@theme inline {
+  --font-sans: var(--font-sans);
+  --breakpoint-3xl: var(--breakpoint-3xl);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --color-primary: var(--color-primary);
+  --color-secondary: var(--color-secondary);
+  --color-accent: var(--color-accent);
+  --color-text: var(--color-text);
+
+  --ease-fluid: var(--ease-fluid);
+  --ease-snappy: var(--ease-snappy);
+}
+
+
