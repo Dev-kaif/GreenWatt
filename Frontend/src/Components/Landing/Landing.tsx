@@ -23,7 +23,8 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react"; // Import useEffect
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
@@ -44,6 +45,18 @@ export default function GreenWattLanding() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { scrollYProgress } = useScroll();
   const heroRef = useRef(null);
+  const navigate = useNavigate(); // Initialize useNavigate
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // New state to track login status
+
+  // Check login status on component mount
+  useEffect(() => {
+    const token = localStorage.getItem("token"); // Assuming 'token' is your key for the access token
+    if (token) {
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, []); // Empty dependency array means this runs once on mount
 
   // Smooth scroll function
   const scrollToSection = (sectionId: string) => {
@@ -60,6 +73,15 @@ export default function GreenWattLanding() {
   // Subtle parallax effects
   const heroY = useTransform(scrollYProgress, [0, 1], [0, -30]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
+
+  // Function to handle "Get Started" / "Start Trial" clicks
+  const handleAuthRedirect = () => {
+    if (isLoggedIn) {
+      navigate("/dashboard"); // If logged in, go to dashboard
+    } else {
+      navigate("/auth/signup"); // If not logged in, go to signup
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white text-gray-700 overflow-x-hidden">
@@ -105,8 +127,8 @@ export default function GreenWattLanding() {
                   {item.label}
                 </motion.button>
               ))}
-              <motion.a
-                href="/auth/login"
+              <motion.button // Changed from <a> to <button> for onClick
+                onClick={handleAuthRedirect} // Use the new handler
                 className="bg-primary text-white px-6 py-2 rounded-full font-medium hover:bg-primary/90 transition-colors"
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.2 }}
@@ -114,8 +136,9 @@ export default function GreenWattLanding() {
                 animate={{ opacity: 1, scale: 1 }}
                 style={{ transitionDelay: "0.7s" }}
               >
-                Get Started
-              </motion.a>
+                {isLoggedIn ? "Go to Dashboard" : "Get Started"}{" "}
+                {/* Dynamic text */}
+              </motion.button>
             </div>
 
             {/* Mobile Menu Button */}
@@ -169,8 +192,8 @@ export default function GreenWattLanding() {
                 >
                   {[
                     { label: "Features", id: "features" },
-                    { label: "Working", id: "how-it-works" },
-                    { label: "Reviews", id: "testimonials" },
+                    { label: "How It Works", id: "how-it-works" }, // Updated label to match ID for clarity
+                    { label: "Testimonials", id: "testimonials" }, // Updated label to match ID for clarity
                     { label: "FAQ", id: "FAQ" },
                     { label: "Contact", id: "contact" },
                   ].map((item) => (
@@ -183,11 +206,13 @@ export default function GreenWattLanding() {
                       {item.label}
                     </motion.button>
                   ))}
-                  <motion.button
+                  <motion.button // Changed from <a> to <button> for onClick
                     variants={fadeInUp}
+                    onClick={handleAuthRedirect} // Use the new handler
                     className="w-full bg-primary text-white px-6 py-3 rounded-full font-medium hover:bg-primary/90 transition-colors"
                   >
-                    Get Started
+                    {isLoggedIn ? "Go to Dashboard" : "Get Started"}{" "}
+                    {/* Dynamic text */}
                   </motion.button>
                 </motion.div>
               </motion.div>
@@ -243,8 +268,8 @@ export default function GreenWattLanding() {
                 variants={fadeInUp}
                 className="flex flex-col sm:flex-row gap-4"
               >
-                <motion.a
-                  href="/auth/signup"
+                <motion.button // Changed from <a> to <button> for onClick
+                  onClick={handleAuthRedirect} // Use the new handler
                   className="bg-primary text-white px-8 py-4 rounded-full font-semibold text-lg flex items-center justify-center space-x-2"
                   whileHover={{
                     scale: 1.02,
@@ -252,9 +277,12 @@ export default function GreenWattLanding() {
                   }}
                   transition={{ duration: 0.2 }}
                 >
-                  <span>Start Free 14-Day Trial</span>
+                  <span>
+                    {isLoggedIn ? "Go to Dashboard" : "Start Free 14-Day Trial"}
+                  </span>{" "}
+                  {/* Dynamic text */}
                   <ArrowRight className="h-5 w-5" />
-                </motion.a>
+                </motion.button>
 
                 <motion.button
                   className="border-2 border-primary text-primary px-8 py-4 rounded-full font-semibold text-lg flex items-center justify-center space-x-2 hover:bg-primary/5"
@@ -457,21 +485,24 @@ export default function GreenWattLanding() {
                 title: "Upload Your Data",
                 description:
                   "Import your energy bills or connect your smart meter. Our system supports multiple formats and providers.",
-                image: "/placeholder.svg?height=300&width=400",
+                image:
+                  "https://placehold.co/400x300/e0e0e0/333333?text=Upload+Data",
               },
               {
                 step: "02",
                 title: "Analyze Patterns",
                 description:
                   "Our AI analyzes your consumption patterns, identifies peak usage times, and spots inefficiencies.",
-                image: "/placeholder.svg?height=300&width=400",
+                image:
+                  "https://placehold.co/400x300/d0d0d0/333333?text=Analyze+Patterns",
               },
               {
                 step: "03",
                 title: "Save & Optimize",
                 description:
                   "Follow personalized recommendations, track your progress, and watch your bills decrease month by month.",
-                image: "/placeholder.svg?height=300&width=400",
+                image:
+                  "https://placehold.co/400x300/c0c0c0/333333?text=Save+%26+Optimize",
               },
             ].map((step, index) => (
               <motion.div
@@ -483,7 +514,7 @@ export default function GreenWattLanding() {
               >
                 <div className="relative mb-8">
                   <motion.img
-                    src={step.image || "/placeholder.svg"}
+                    src={step.image} // Using placeholder images
                     alt={step.title}
                     className="w-full h-64 object-cover rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300"
                     whileHover={{ scale: 1.02 }}
@@ -555,21 +586,21 @@ export default function GreenWattLanding() {
               {
                 name: "Sarah Johnson",
                 role: "Homeowner",
-                image: "/placeholder.svg?height=80&width=80",
+                image: "https://placehold.co/80x80/e0e0e0/333333?text=SJ",
                 rating: 5,
                 text: "GreenWatt helped us reduce our electricity bill by 35% in just 3 months. The insights are incredible!",
               },
               {
                 name: "Mike Chen",
                 role: "Environmental Consultant",
-                image: "/placeholder.svg?height=80&width=80",
+                image: "https://placehold.co/80x80/d0d0d0/333333?text=MC",
                 rating: 5,
                 text: "As someone who cares about sustainability, this app is a game-changer. Easy to use and very effective.",
               },
               {
                 name: "Emily Rodriguez",
                 role: "Family of 4",
-                image: "/placeholder.svg?height=80&width=80",
+                image: "https://placehold.co/80x80/c0c0c0/333333?text=ER",
                 rating: 5,
                 text: "The personalized tips are spot-on. We've made simple changes that resulted in significant savings.",
               },
@@ -594,7 +625,7 @@ export default function GreenWattLanding() {
                 </p>
                 <div className="flex items-center">
                   <img
-                    src={testimonial.image || "/placeholder.svg"}
+                    src={testimonial.image} // Using placeholder images
                     alt={testimonial.name}
                     className="w-12 h-12 rounded-full mr-4"
                   />
@@ -811,15 +842,30 @@ export default function GreenWattLanding() {
             className="flex flex-wrap justify-center items-center gap-8"
           >
             {[
-              { name: "React", logo: "/placeholder.svg?height=60&width=60" },
+              {
+                name: "React",
+                logo: "https://placehold.co/60x60/e0e0e0/333333?text=React",
+              },
               {
                 name: "Tailwind CSS",
-                logo: "/placeholder.svg?height=60&width=60",
+                logo: "https://placehold.co/60x60/d0d0d0/333333?text=Tailwind",
               },
-              { name: "Firebase", logo: "/placeholder.svg?height=60&width=60" },
-              { name: "MongoDB", logo: "/placeholder.svg?height=60&width=60" },
-              { name: "Vercel", logo: "/placeholder.svg?height=60&width=60" },
-              { name: "Node.js", logo: "/placeholder.svg?height=60&width=60" },
+              {
+                name: "Firebase",
+                logo: "https://placehold.co/60x60/c0c0c0/333333?text=Firebase",
+              },
+              {
+                name: "MongoDB",
+                logo: "https://placehold.co/60x60/b0b0b0/333333?text=MongoDB",
+              },
+              {
+                name: "Vercel",
+                logo: "https://placehold.co/60x60/a0a0a0/333333?text=Vercel",
+              },
+              {
+                name: "Node.js",
+                logo: "https://placehold.co/60x60/909090/333333?text=Node.js",
+              },
             ].map((tech, index) => (
               <motion.div
                 key={index}
@@ -829,7 +875,7 @@ export default function GreenWattLanding() {
                 transition={{ duration: 0.2 }}
               >
                 <img
-                  src={tech.logo || "/placeholder.svg"}
+                  src={tech.logo} // Using placeholder images
                   alt={tech.name}
                   className="h-12 w-12 mx-auto mb-3"
                 />
@@ -860,7 +906,8 @@ export default function GreenWattLanding() {
               consumption and environmental impact with GreenWatt.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <motion.button
+              <motion.button // Changed from <a> to <button> for onClick
+                onClick={handleAuthRedirect} // Use the new handler
                 className="bg-white text-primary px-8 py-4 rounded-full font-semibold text-lg flex items-center justify-center space-x-2"
                 whileHover={{
                   scale: 1.02,
@@ -868,7 +915,10 @@ export default function GreenWattLanding() {
                 }}
                 transition={{ duration: 0.2 }}
               >
-                <span>Start Free Trial</span>
+                <span>
+                  {isLoggedIn ? "Go to Dashboard" : "Start Free Trial"}
+                </span>{" "}
+                {/* Dynamic text */}
                 <ArrowRight className="h-5 w-5" />
               </motion.button>
               <motion.button
