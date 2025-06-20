@@ -30,7 +30,7 @@ export default function LoginPage() {
     rememberMe: false,
   });
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,21 +38,28 @@ export default function LoginPage() {
     setError(null); // Clear any previous errors
 
     try {
-      const response = await axios.post(`${BACKEND_URL}/api/auth/login`, {
-        email: formData.email,
-        password: formData.password,
-      });
+      const response = await axios.post(
+        `${BACKEND_URL}/api/auth/login`,
+        {
+          email: formData.email,
+          password: formData.password,
+        },
+        {
+          withCredentials: true,
+        }
+      );
 
       console.log("Login successful:", response.data);
-   const { access_token } = response.data.session;
+      const { access_token } = response.data.session;
 
       if (access_token) {
-        localStorage.setItem("token", access_token); 
-        navigate('/dashboard');
+        localStorage.setItem("token", access_token);
+        navigate("/dashboard");
       } else {
-        setError("Login successful, but no access token was provided by the server.");
+        setError(
+          "Login successful, but no access token was provided by the server."
+        );
       }
-
     } catch (err: any) {
       console.error("Login failed:", err);
       if (err.response) {

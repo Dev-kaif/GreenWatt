@@ -15,16 +15,15 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware to parse JSON request bodies
-app.use(express.json());
 app.use(
   cors({
     origin: FRONTEND_URL,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-app.options('*', cors());
+app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/meter-readings", meterReadingRoutes);

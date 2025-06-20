@@ -10,10 +10,10 @@ import {
   User,
   ArrowRight,
   Home,
-  Users, 
+  Users,
 } from "lucide-react";
 import axios from "axios";
-import { BACKEND_URL } from "../../utils/Config"; 
+import { BACKEND_URL } from "../../utils/Config";
 import { useNavigate } from "react-router-dom";
 
 const fadeInUp = {
@@ -32,7 +32,8 @@ const staggerContainer = {
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] =
+    useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null); // State for API errors or form validation errors
   const [successMessage, setSuccessMessage] = useState<string | null>(null); // State for success messages
@@ -57,15 +58,37 @@ export default function SignupPage() {
   const navigate = useNavigate();
 
   // Custom message box component (replaces alert)
-  const MessageBox = ({ message, type, onClose }: { message: string; type: "success" | "error"; onClose: () => void }) => (
-    <div className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4`}>
-      <div className={`bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center ${type === "success" ? "border-green-500" : "border-red-500"} border-2`}>
-        <p className={`text-lg font-semibold mb-4 ${type === "success" ? "text-green-700" : "text-red-700"}`}>
+  const MessageBox = ({
+    message,
+    type,
+    onClose,
+  }: {
+    message: string;
+    type: "success" | "error";
+    onClose: () => void;
+  }) => (
+    <div
+      className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4`}
+    >
+      <div
+        className={`bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center ${
+          type === "success" ? "border-green-500" : "border-red-500"
+        } border-2`}
+      >
+        <p
+          className={`text-lg font-semibold mb-4 ${
+            type === "success" ? "text-green-700" : "text-red-700"
+          }`}
+        >
           {message}
         </p>
         <button
           onClick={onClose}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${type === "success" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"} text-white`}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            type === "success"
+              ? "bg-green-500 hover:bg-green-600"
+              : "bg-red-500 hover:bg-red-600"
+          } text-white`}
         >
           OK
         </button>
@@ -86,7 +109,8 @@ export default function SignupPage() {
       setError("You must agree to the Terms and Conditions.");
       return;
     }
-    if (passwordStrength.score < 3) { // Minimum strength requirement
+    if (passwordStrength.score < 3) {
+      // Minimum strength requirement
       setError("Please create a stronger password.");
       return;
     }
@@ -94,34 +118,39 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      const response = await axios.post(`${BACKEND_URL}/api/auth/signup`, {
-        email: formData.email,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        householdSize: formData.householdSize, // Required field
-      });
+      const response = await axios.post(
+        `${BACKEND_URL}/api/auth/signup`,
+        {
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          householdSize: formData.householdSize, // Required field
+        },
+        { withCredentials: true }
+      );
 
       console.log("Signup successful:", response.data);
       setSuccessMessage(
         response.data.message ||
-        "Signup successful! Please check your email for verification if required."
+          "Signup successful! Please check your email for verification if required."
       );
 
       // After a short delay, navigate to login page
       setTimeout(() => {
-        navigate('/auth/login');
+        navigate("/auth/login");
       }, 3000); // Wait 3 seconds to show success message
-
     } catch (err: any) {
       console.error("Signup failed:", err);
       if (err.response) {
         setError(
           err.response.data.message ||
-          "Signup failed. Please try again with different credentials."
+            "Signup failed. Please try again with different credentials."
         );
       } else if (err.request) {
-        setError("No response from server. Please check your internet connection.");
+        setError(
+          "No response from server. Please check your internet connection."
+        );
       } else {
         setError("An unexpected error occurred during signup.");
       }
@@ -134,7 +163,12 @@ export default function SignupPage() {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : (type === "number" ? parseInt(value) : value),
+      [name]:
+        type === "checkbox"
+          ? checked
+          : type === "number"
+          ? parseInt(value)
+          : value,
     }));
 
     if (name === "password") {
@@ -180,7 +214,6 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen py-10 relative bg-white flex items-center justify-center p-4">
-
       {/* Message Box for Success/Error */}
       {successMessage && (
         <MessageBox
@@ -495,7 +528,12 @@ export default function SignupPage() {
               <motion.button
                 variants={fadeInUp}
                 type="submit"
-                disabled={isLoading || !formData.agreeToTerms || formData.password !== formData.confirmPassword || passwordStrength.score < 3}
+                disabled={
+                  isLoading ||
+                  !formData.agreeToTerms ||
+                  formData.password !== formData.confirmPassword ||
+                  passwordStrength.score < 3
+                }
                 className="w-full bg-primary text-white py-3 rounded-lg font-semibold flex items-center justify-center space-x-2 hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 whileHover={{ scale: isLoading ? 1 : 1.02 }}
                 whileTap={{ scale: isLoading ? 1 : 0.98 }}
