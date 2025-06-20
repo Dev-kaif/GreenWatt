@@ -1,4 +1,5 @@
-import { motion } from "motion/react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { motion } from "framer-motion";
 import { useState } from "react";
 import {
   Eye,
@@ -8,8 +9,12 @@ import {
   Lock,
   User,
   ArrowRight,
-  Home, // Import Home icon
+  Home,
+  Users, 
 } from "lucide-react";
+import axios from "axios";
+import { BACKEND_URL } from "../../utils/Config"; 
+import { useNavigate } from "react-router-dom";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -26,50 +31,112 @@ const staggerContainer = {
 };
 
 export default function SignupPage() {
-  const [showPassword, setShowPassword] = useState<boolean>(false); // Explicit type
-  const [showConfirmPassword, setShowConfirmPassword] =
-    useState<boolean>(false); // Explicit type
-  const [isLoading, setIsLoading] = useState<boolean>(false); // Explicit type
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null); // State for API errors or form validation errors
+  const [successMessage, setSuccessMessage] = useState<string | null>(null); // State for success messages
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
-    agreeToTerms: false, // This seems missing in your form, consider adding a checkbox for it
-    subscribeNewsletter: true,
+    householdSize: 1,
+    agreeToTerms: false,
   });
 
   const [passwordStrength, setPasswordStrength] = useState<{
     score: number;
-    feedback: string[]; // Explicitly define feedback as an array of strings
+    feedback: string[];
   }>({
     score: 0,
     feedback: [],
   });
 
+  const navigate = useNavigate();
+
+  // Custom message box component (replaces alert)
+  const MessageBox = ({ message, type, onClose }: { message: string; type: "success" | "error"; onClose: () => void }) => (
+    <div className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4`}>
+      <div className={`bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center ${type === "success" ? "border-green-500" : "border-red-500"} border-2`}>
+        <p className={`text-lg font-semibold mb-4 ${type === "success" ? "text-green-700" : "text-red-700"}`}>
+          {message}
+        </p>
+        <button
+          onClick={onClose}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${type === "success" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"} text-white`}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  );
+
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
+    setError(null); // Clear previous errors
+    setSuccessMessage(null); // Clear previous success messages
+
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords don't match");
+      setError("Passwords do not match.");
       return;
     }
+    if (!formData.agreeToTerms) {
+      setError("You must agree to the Terms and Conditions.");
+      return;
+    }
+    if (passwordStrength.score < 3) { // Minimum strength requirement
+      setError("Please create a stronger password.");
+      return;
+    }
+
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsLoading(false);
-    // Optionally, navigate to a success page or login after signup
-    // router.push('/auth/login');
+
+    try {
+      const response = await axios.post(`${BACKEND_URL}/api/auth/signup`, {
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        householdSize: formData.householdSize, // Required field
+      });
+
+      console.log("Signup successful:", response.data);
+      setSuccessMessage(
+        response.data.message ||
+        "Signup successful! Please check your email for verification if required."
+      );
+
+      // After a short delay, navigate to login page
+      setTimeout(() => {
+        navigate('/auth/login');
+      }, 3000); // Wait 3 seconds to show success message
+
+    } catch (err: any) {
+      console.error("Signup failed:", err);
+      if (err.response) {
+        setError(
+          err.response.data.message ||
+          "Signup failed. Please try again with different credentials."
+        );
+      } else if (err.request) {
+        setError("No response from server. Please check your internet connection.");
+      } else {
+        setError("An unexpected error occurred during signup.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === "checkbox" ? checked : (type === "number" ? parseInt(value) : value),
     }));
 
-    // Password strength check
     if (name === "password") {
       checkPasswordStrength(value);
     }
@@ -77,7 +144,7 @@ export default function SignupPage() {
 
   const checkPasswordStrength = (password: string): void => {
     let score = 0;
-    const feedback: string[] = []; // Explicitly define feedback as an array of strings here too
+    const feedback: string[] = [];
 
     if (password.length >= 8) score++;
     else feedback.push("At least 8 characters");
@@ -113,6 +180,22 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen py-10 relative bg-white flex items-center justify-center p-4">
+
+      {/* Message Box for Success/Error */}
+      {successMessage && (
+        <MessageBox
+          message={successMessage}
+          type="success"
+          onClose={() => setSuccessMessage(null)}
+        />
+      )}
+      {error && (
+        <MessageBox
+          message={error}
+          type="error"
+          onClose={() => setError(null)}
+        />
+      )}
 
       {/* Home Button */}
       <motion.a
@@ -199,7 +282,7 @@ export default function SignupPage() {
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <motion.input
+                    <input
                       type="text"
                       id="firstName"
                       name="firstName"
@@ -208,8 +291,6 @@ export default function SignupPage() {
                       required
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                       placeholder="John"
-                      // Removed whileFocus and transition props from here as input elements are not motion components by default
-                      // If you want them, change input to motion.input
                     />
                   </div>
                 </motion.div>
@@ -221,7 +302,7 @@ export default function SignupPage() {
                   >
                     Last name
                   </label>
-                  <input // Changed to regular input, as it was not motion.input
+                  <input
                     type="text"
                     id="lastName"
                     name="lastName"
@@ -230,7 +311,6 @@ export default function SignupPage() {
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                     placeholder="Doe"
-                    // Removed whileFocus and transition props
                   />
                 </motion.div>
               </div>
@@ -245,7 +325,7 @@ export default function SignupPage() {
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input // Changed to regular input, as it was not motion.input
+                  <input
                     type="email"
                     id="email"
                     name="email"
@@ -254,7 +334,6 @@ export default function SignupPage() {
                     required
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                     placeholder="john@example.com"
-                    // Removed whileFocus and transition props
                   />
                 </div>
               </motion.div>
@@ -269,7 +348,7 @@ export default function SignupPage() {
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input // Changed to regular input, as it was not motion.input
+                  <input
                     type={showPassword ? "text" : "password"}
                     id="password"
                     name="password"
@@ -278,7 +357,6 @@ export default function SignupPage() {
                     required
                     className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                     placeholder="Create a strong password"
-                    // Removed whileFocus and transition props
                   />
                   <button
                     type="button"
@@ -333,7 +411,7 @@ export default function SignupPage() {
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input // Changed to regular input, as it was not motion.input
+                  <input
                     type={showConfirmPassword ? "text" : "password"}
                     id="confirmPassword"
                     name="confirmPassword"
@@ -342,7 +420,6 @@ export default function SignupPage() {
                     required
                     className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
                     placeholder="Confirm your password"
-                    // Removed whileFocus and transition props
                   />
                   <button
                     type="button"
@@ -366,6 +443,30 @@ export default function SignupPage() {
                       Passwords don't match
                     </motion.p>
                   )}
+              </motion.div>
+
+              {/* Household Size Field */}
+              <motion.div variants={fadeInUp} className="space-y-2">
+                <label
+                  htmlFor="householdSize"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Household Size
+                </label>
+                <div className="relative">
+                  <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    type="number"
+                    id="householdSize"
+                    name="householdSize"
+                    value={formData.householdSize}
+                    onChange={handleInputChange}
+                    required
+                    min="1" // Ensure at least 1 person
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                    placeholder="e.g., 4"
+                  />
+                </div>
               </motion.div>
 
               {/* Terms and Conditions Checkbox */}
@@ -394,7 +495,7 @@ export default function SignupPage() {
               <motion.button
                 variants={fadeInUp}
                 type="submit"
-                disabled={isLoading || !formData.agreeToTerms} // Ensure agreeToTerms is part of the form
+                disabled={isLoading || !formData.agreeToTerms || formData.password !== formData.confirmPassword || passwordStrength.score < 3}
                 className="w-full bg-primary text-white py-3 rounded-lg font-semibold flex items-center justify-center space-x-2 hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 whileHover={{ scale: isLoading ? 1 : 1.02 }}
                 whileTap={{ scale: isLoading ? 1 : 0.98 }}
@@ -428,9 +529,6 @@ export default function SignupPage() {
             >
               <p className="text-sm text-gray-600">
                 Already have an account?{" "}
-                {/* Using a regular anchor tag for simplicity.
-                    For client-side routing in Next.js, use the <Link> component from 'next/link'.
-                    For React Router DOM, use the <Link> component from 'react-router-dom'. */}
                 <a
                   href="/auth/login"
                   className="text-primary hover:text-primary/80 font-medium transition-colors"

@@ -1,6 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Eye, EyeOff, Leaf, Mail, Lock, ArrowRight, Home } from "lucide-react";
+import axios from "axios";
+import { BACKEND_URL } from "../../utils/Config";
+import { useNavigate } from "react-router-dom";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -19,18 +23,53 @@ const staggerContainer = {
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null); // State for error messages
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     rememberMe: false,
   });
 
+  const navigate = useNavigate()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsLoading(false);
+    setError(null); // Clear any previous errors
+
+    try {
+      const response = await axios.post(`${BACKEND_URL}/api/auth/login`, {
+        email: formData.email,
+        password: formData.password,
+      });
+
+      console.log("Login successful:", response.data);
+   const { access_token } = response.data.session;
+
+      if (access_token) {
+        localStorage.setItem("token", access_token); 
+        navigate('/dashboard');
+      } else {
+        setError("Login successful, but no access token was provided by the server.");
+      }
+
+    } catch (err: any) {
+      console.error("Login failed:", err);
+      if (err.response) {
+        setError(
+          err.response.data.message ||
+            "Login failed. Please check your credentials."
+        );
+      } else if (err.request) {
+        // The request was made but no response was received
+        setError("No response from server. Please try again later.");
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        setError("An unexpected error occurred. Please try again.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,7 +102,7 @@ export default function LoginPage() {
           className="absolute inset-0"
           style={{
             backgroundImage: `radial-gradient(circle at 25% 25%, #32C686 0%, transparent 50%), 
-                           radial-gradient(circle at 75% 75%, #0F3D3E 0%, transparent 50%)`,
+                               radial-gradient(circle at 75% 75%, #0F3D3E 0%, transparent 50%)`,
           }}
         />
       </div>
@@ -194,6 +233,16 @@ export default function LoginPage() {
                   <span className="text-sm text-gray-600">Remember me</span>
                 </label>
               </motion.div>
+
+              {/* Error Message Display */}
+              {error && (
+                <motion.div
+                  variants={fadeInUp}
+                  className="text-red-600 text-sm text-center"
+                >
+                  {error}
+                </motion.div>
+              )}
 
               {/* Submit Button */}
               <motion.button
