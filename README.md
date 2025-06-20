@@ -1,4 +1,3 @@
-Sure, here is the README content for your GreenWatt project, as requested:
 
 # GreenWatt: Intelligent Energy Monitoring & Optimization
 
