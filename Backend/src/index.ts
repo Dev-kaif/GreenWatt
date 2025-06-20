@@ -24,6 +24,8 @@ app.use(
   })
 );
 
+app.options('*', cors());
+
 app.use("/api/auth", authRoutes);
 app.use("/api/meter-readings", meterReadingRoutes);
 app.use("/api/profile", userProfileRoutes);
