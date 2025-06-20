@@ -1,27 +1,29 @@
+// src/App.tsx (This file remains mostly as you provided it, now relying on the enhanced ProtectedRoute)
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import GreenWattLanding from "./Components/Landing/Landing";
 import LoginPage from "./Components/Landing/Login";
 import SignupPage from "./Components/Landing/Signup";
-import ProtectedRoute from "./Components/Landing/Protected";
-import Index from "./Components/Dashboard/DashboardPage";
+import ProtectedRoute from "./Components/Landing/Protected"; // This is the updated component
+import Index from "./Components/Dashboard/DashboardPage"; // Your Dashboard component
+import OnboardingWizard from "./Components/Onboarding/OnboardingWizard"; // Your Onboarding Wizard
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Route for the landing page */}
+        {/* Public Routes */}
         <Route path="/" element={<GreenWattLanding />} />
-
-        {/* Route for the login page */}
         <Route path="/auth/login" element={<LoginPage />} />
-
-        {/* Route for the signup page */}
         <Route path="/auth/signup" element={<SignupPage />} />
-        {/* Protected Routes */}
+
+        {/* Protected Routes Wrapper */}
+        {/* ProtectedRoute will now internally handle redirects to /onboarding or /auth/login */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Index />} />
+          <Route path="/onboarding" element={<OnboardingWizard/>} />
         </Route>
 
+        {/* Catch-all for 404 */}
         <Route path="*" element={<div>404 Not Found</div>} />
       </Routes>
     </Router>

@@ -18,21 +18,23 @@ export const getUserProfile = async (req: Request, res: Response) => {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        userProfile: true, // Include the related UserProfile
+        userProfile: true,
       },
     });
 
     if (!user) {
-      res.status(404).json({ message: "User profile not found." });
+      res.status(404).json({ message: "User not found." });
       return;
     }
 
     // Exclude sensitive data like passwordHash
     const { passwordHash, ...userWithoutPassword } = user;
 
+    // Return both user details and their associated userProfile (which contains onboardingComplete)
     res.status(200).json({
       message: "User profile retrieved successfully.",
       user: userWithoutPassword,
+      userProfile: user.userProfile,
     });
     return;
   } catch (error: any) {
@@ -51,14 +53,15 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     firstName,
     lastName,
     phoneNumber,
-    householdSize,
-    address,
-    city,
-    state,
-    zipCode,
-    targetReduction, // From UserProfile
-    ecoGoals, // From UserProfile
-    electricityRatePerKWh, // NEW: Include electricityRatePerKWh from the request body
+    householdSize, 
+    address,       
+    city,          
+    state,         
+    zipCode,       
+    targetReduction,       
+    ecoGoals,              
+    electricityRatePerKWh, 
+    onboardingComplete,    
   } = req.body;
 
   if (!userId) {
@@ -76,8 +79,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
           firstName: firstName !== undefined ? firstName : undefined,
           lastName: lastName !== undefined ? lastName : undefined,
           phoneNumber: phoneNumber !== undefined ? phoneNumber : undefined,
-          householdSize:
-            householdSize !== undefined ? householdSize : undefined,
+          householdSize: householdSize !== undefined ? householdSize : undefined,
           address: address !== undefined ? address : undefined,
           city: city !== undefined ? city : undefined,
           state: state !== undefined ? state : undefined,
@@ -86,26 +88,22 @@ export const updateUserProfile = async (req: Request, res: Response) => {
         },
       });
 
-      // Update or Create UserProfile
-      let updatedUserProfile;
-      // Only proceed with upsert if any UserProfile-specific fields are provided
-      if (targetReduction !== undefined || ecoGoals !== undefined || electricityRatePerKWh !== undefined) {
-        updatedUserProfile = await tx.userProfile.upsert({
+      const updatedUserProfile = await tx.userProfile.upsert({
           where: { userId: userId },
           update: {
-            targetReduction:
-              targetReduction !== undefined ? targetReduction : undefined,
+            targetReduction: targetReduction !== undefined ? targetReduction : undefined,
             ecoGoals: ecoGoals !== undefined ? ecoGoals : undefined,
-            electricityRatePerKWh: electricityRatePerKWh !== undefined ? electricityRatePerKWh : undefined, // NEW: Update the field
+            electricityRatePerKWh: electricityRatePerKWh !== undefined ? electricityRatePerKWh : undefined,
+            onboardingComplete: onboardingComplete !== undefined ? onboardingComplete : undefined, // NEW: Update the onboardingComplete flag
           },
           create: {
             userId: userId,
             targetReduction: targetReduction,
             ecoGoals: ecoGoals,
             electricityRatePerKWh: electricityRatePerKWh,
+            onboardingComplete: onboardingComplete !== undefined ? onboardingComplete : false, 
           },
-        });
-      }
+      });
 
       return { user: updatedUser, userProfile: updatedUserProfile };
     });
@@ -113,19 +111,19 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     // Exclude sensitive data like passwordHash
     const { passwordHash, ...userWithoutPassword } = updatedData.user;
 
-    // Call updateUserEmbedding after successful updates
+    // Call updateUserEmbedding after successful updates (assuming this service is relevant to profile changes)
     await updateUserEmbedding(userId);
 
     res.status(200).json({
       message: "User profile updated successfully.",
       user: userWithoutPassword,
-      userProfile: updatedData.userProfile,
+      userProfile: updatedData.userProfile, // Return the updated userProfile including the onboardingComplete flag
     });
     return;
   } catch (error: any) {
     console.error("Error updating user profile:", error);
     if (error.code === "P2025") {
-      // Prisma error code for record not found (e.g., user doesn't exist)
+      // Prisma error code for record not found (e.g., user doesn't exist for update)
       res
         .status(404)
         .json({ message: "User not found.", error: error.message });

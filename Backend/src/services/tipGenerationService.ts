@@ -14,7 +14,7 @@ const prisma = new PrismaClient();
 const chatModel = new ChatGoogleGenerativeAI({
   apiKey: GEMINI_API_KEY, // Ensure this is securely handled in your environment
   model: "gemini-2.0-flash",
-  temperature: 0.7,
+  temperature: 0.3,
 });
 
 function stripMarkdown(text: string): string {
@@ -311,7 +311,7 @@ ${
           1. A short friendly intro referencing the user's situation.
           2. One clear, specific energy-saving action.
           3. A concrete benefit (e.g., save X%, reduce Y kWh/month, lower bill by ₹Z).
-          4. A follow-up offer to help further or explore more options.
+          4. NO Cross questions
         - If the user query is missing, too broad, or unclear, give a useful general tip based on the provided energy usage.
         - Avoid repeating context back to the user. Focus on **insightful, helpful action**.
 
