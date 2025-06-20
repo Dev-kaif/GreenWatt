@@ -1,5 +1,5 @@
 // src/App.tsx (This file remains mostly as you provided it, now relying on the enhanced ProtectedRoute)
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import GreenWattLanding from "./Components/Landing/Landing";
 import LoginPage from "./Components/Landing/Login";
 import SignupPage from "./Components/Landing/Signup";
