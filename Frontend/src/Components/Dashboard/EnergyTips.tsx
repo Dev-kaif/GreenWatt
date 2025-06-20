@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/pages/EnergyTips.tsx
-import React, { useState, useEffect} from 'react';
+import { useState, useEffect} from 'react';
 import { Lightbulb, RefreshCw, Sparkles, AlertCircle, Send } from 'lucide-react'; // Adjusted icons
 import { motion } from 'framer-motion';
 import axiosInstance from '../../utils/axios'; // Adjust path if needed
