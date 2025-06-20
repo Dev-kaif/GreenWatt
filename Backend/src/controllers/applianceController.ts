@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { updateUserEmbedding } from '../services/updateUserEmbedding';
 
 const prisma = new PrismaClient();
 
@@ -47,6 +48,8 @@ export const addAppliance = async (req: Request, res: Response) => {
         capacity: capacity,
       },
     });
+
+    await updateUserEmbedding(userId);
 
     res.status(201).json({
       message: 'Appliance added successfully.',
@@ -193,6 +196,8 @@ export const updateAppliance = async (req: Request, res: Response) => {
     // Fetch the updated record to return it in the response
     const recordToReturn = await prisma.appliance.findUnique({ where: { id: id } });
 
+    await updateUserEmbedding(userId);
+
     res.status(200).json({
       message: 'Appliance updated successfully.',
       appliance: recordToReturn,
@@ -228,6 +233,8 @@ export const deleteAppliance = async (req: Request, res: Response) => {
       res.status(404).json({ message: 'Appliance not found or does not belong to user.' });
       return;
     }
+
+    await updateUserEmbedding(userId);
 
     res.status(200).json({
       message: 'Appliance deleted successfully.',

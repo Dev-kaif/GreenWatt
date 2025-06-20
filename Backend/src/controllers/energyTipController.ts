@@ -1,165 +1,76 @@
+// src/controllers/energyTipController.ts
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+// Assuming generatePersonalizedTips is the service that calls LangChain and Gemini
+import { generatePersonalizedTips } from '../services/tipGenerationService';
+import { PrismaClient } from '@prisma/client'; // Import PrismaClient to fetch historical tips
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient(); // Initialize PrismaClient
 
-// Get All Personalized Energy Tips for the authenticated user
-export const getEnergyTips = async (req: Request, res: Response) => {
-  const userId = req.user?.id;
-
-  if (!userId) {
-    res.status(401).json({ message: 'User not authenticated.' });
-    return;
-  }
-
+// Controller for generating personalized tips (now can take a user query)
+export const generateTipsController = async (req: Request, res: Response) => {
   try {
-    const tips = await prisma.energyTip.findMany({
-      where: { userId: userId },
-      include: {
-        generalTip: { // Include details from the GeneralEnergyTip if linked
-          select: {
-            title: true,
-            description: true,
-            category: true,
-            ecoLink: true,
-            imageUrl: true,
-          },
-        },
-        contextReading: { // Include details about the contextual meter reading if linked
-          select: {
-            readingDate: true,
-            consumptionKWH: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' }, // Order by most recently added first
-    });
+    const userId = req.user?.id;
+    // Allow an optional 'query' for the chatbot interaction
+    const userQuery = req.query.q ? String(req.query.q) : undefined; // Get query from URL params
 
-    res.status(200).json({
-      message: 'Energy tips retrieved successfully.',
-      tips: tips,
-    });
-    return;
-
-  } catch (error: any) {
-    console.error('Error retrieving energy tips:', error);
-    res.status(500).json({ message: 'Internal server error.', error: error.message });
-    return;
-  }
-};
-
-// Update status (isDismissed, isImplemented) of a Personalized Energy Tip
-export const updateEnergyTipStatus = async (req: Request, res: Response) => {
-  const userId = req.user?.id;
-  const { id } = req.params; // Tip ID from URL parameter
-  const { isDismissed, isImplemented } = req.body;
-
-  if (!userId) {
-    res.status(401).json({ message: 'User not authenticated.' });
-    return;
-  }
-
-  // Ensure at least one status field is provided
-  if (isDismissed === undefined && isImplemented === undefined) {
-    res.status(400).json({ message: 'No status fields provided for update (isDismissed or isImplemented).' });
-    return;
-  }
-
-  // Type check for boolean values
-  if ((isDismissed !== undefined && typeof isDismissed !== 'boolean') ||
-      (isImplemented !== undefined && typeof isImplemented !== 'boolean')) {
-    res.status(400).json({ message: 'isDismissed and isImplemented must be boolean values.' });
-    return;
-  }
-
-  try {
-    const updatedTip = await prisma.energyTip.updateMany({
-      where: {
-        id: id,
-        userId: userId, // Ensure the tip belongs to the authenticated user
-      },
-      data: {
-        isDismissed: isDismissed !== undefined ? isDismissed : undefined,
-        isImplemented: isImplemented !== undefined ? isImplemented : undefined,
-        updatedAt: new Date(),
-      },
-    });
-
-    if (updatedTip.count === 0) {
-      res.status(404).json({ message: 'Energy tip not found or does not belong to user.' });
+    if (!userId) {
+      res.status(400).json({ error: 'User ID not found in authentication token. Please ensure you are logged in.' });
       return;
     }
 
-    // Fetch the updated record to return it in the response
-    const recordToReturn = await prisma.energyTip.findUnique({
-      where: { id: id },
-      include: {
-        generalTip: {
-          select: {
-            title: true,
-            description: true,
-            category: true,
-            ecoLink: true,
-            imageUrl: true,
-          },
-        },
-        contextReading: {
-          select: {
-            readingDate: true,
-            consumptionKWH: true,
-          },
-        },
-      },
-    });
+    // Call the service function, passing the userQuery
+    // The service will handle integrating this into the LLM prompt
+    const tips = await generatePersonalizedTips(userId, userQuery);
 
     res.status(200).json({
-      message: 'Energy tip status updated successfully.',
-      tip: recordToReturn,
+      message: 'Personalized energy tips generated successfully!',
+      tipsCount: tips.length,
+      generatedTips: tips, // Renamed from 'tips' to 'generatedTips' for clarity
     });
-    return;
 
   } catch (error: any) {
-    console.error('Error updating energy tip status:', error);
-    res.status(500).json({ message: 'Internal server error.', error: error.message });
-    return;
+    console.error('[Controller] Error in generateTipsController:', error);
+    res.status(500).json({
+      error: 'Failed to generate personalized tips.',
+      details: error.message || 'An unexpected error occurred.',
+      // Optionally, provide fallback tips here if you want the frontend to always display something
+      generatedTips: ["Failed to generate new tips. Please try again later."],
+    });
   }
 };
 
-// --- Admin-only functionality for GeneralEnergyTip ---
-// These would typically be part of a separate admin API scope with stronger access control.
-// Example: Add a new General Energy Tip (for admin user)
-/*
-export const addGeneralEnergyTip = async (req: Request, res: Response) => {
-  // Assuming 'admin' role check here via middleware
-  // if (!req.user?.role || req.user.role !== 'admin') { ... }
-  const { title, description, category, ecoLink, imageUrl } = req.body;
+// NEW: Controller to get all historical energy tips for the authenticated user
+export const getTipsHistoryController = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
 
-  if (!title || !description) {
-    res.status(400).json({ message: 'Title and description are required for a general tip.' });
+  if (!userId) {
+    res.status(401).json({ message: 'User not authenticated.' });
     return;
   }
 
   try {
-    const newGeneralTip = await prisma.generalEnergyTip.create({
-      data: {
-        title,
-        description,
-        category,
-        ecoLink,
-        imageUrl,
-      },
+    const historicalTips = await prisma.energyTip.findMany({
+      where: { userId: userId },
+      orderBy: { createdAt: 'desc' }, // Latest tips first
+      select: {
+        id: true,
+        tipText: true,
+        createdAt: true,
+      }
     });
 
-    res.status(201).json({
-      message: 'General energy tip added successfully.',
-      tip: newGeneralTip,
+    res.status(200).json({
+      message: 'Historical energy tips retrieved successfully.',
+      tips: historicalTips,
     });
     return;
 
   } catch (error: any) {
-    console.error('Error adding general energy tip:', error);
-    res.status(500).json({ message: 'Internal server error.', error: error.message });
+    console.error('[Controller] Error in getTipsHistoryController:', error);
+    res.status(500).json({
+      message: 'Internal server error.',
+      error: error.message,
+    });
     return;
   }
 };
-*/

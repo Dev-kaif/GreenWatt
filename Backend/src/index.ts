@@ -5,6 +5,8 @@ import meterReadingRoutes from './routes/meterReadingRoutes';
 import userProfileRoutes from './routes/userProfileRoutes';
 import applianceRoutes from './routes/applianceRoutes';
 import energyTipRoutes from './routes/energyTipRoutes'; 
+import analyticsRoutes from './routes/analyticsRoutes'; 
+import cors from 'cors'
 
 dotenv.config();
 
@@ -13,13 +15,13 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware to parse JSON request bodies
 app.use(express.json());
-// app.use(cors())
-
+app.use(cors())
 
 app.use('/api/auth', authRoutes);
 app.use('/api/meter-readings', meterReadingRoutes);
 app.use('/api/profile', userProfileRoutes);
 app.use('/api/appliances', applianceRoutes);
 app.use('/api/energy-tips', energyTipRoutes); 
+app.use('/api/analytics', analyticsRoutes); 
 
 app.listen(PORT);

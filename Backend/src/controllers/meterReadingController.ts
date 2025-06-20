@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import Papa from "papaparse";
+import { updateUserEmbedding } from "../services/updateUserEmbedding";
 
 const prisma = new PrismaClient();
 
@@ -66,6 +67,8 @@ export const addMeterReading = async (req: Request, res: Response) => {
         source: source || "manual",
       },
     });
+
+    await updateUserEmbedding(userId);
 
     res.status(201).json({
       message: "Meter reading added successfully.",
@@ -224,6 +227,8 @@ export const updateMeterReading = async (req: Request, res: Response) => {
       where: { id: id },
     });
 
+    await updateUserEmbedding(userId);
+
     res.status(200).json({
       message: "Meter reading updated successfully.",
       reading: recordToReturn,
@@ -232,7 +237,6 @@ export const updateMeterReading = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("Error updating meter reading:", error);
     if (error.code === "P2002") {
-      // Unique constraint violation (e.g., trying to update date to an existing one)
       res
         .status(409)
         .json({
@@ -441,6 +445,8 @@ export const uploadMeterReadingsCsv = async (req: Request, res: Response) => {
           return;
         }
 
+        await updateUserEmbedding(userId);
+
         res.status(200).json({
           message: `Successfully uploaded and processed ${readingsToCreate.length} meter readings.`,
           uploadedCount: readingsToCreate.length,
@@ -472,11 +478,14 @@ export const uploadMeterReadingsCsv = async (req: Request, res: Response) => {
 // Get Monthly Consumption Summary for Visualization
 export const getMonthlyConsumptionSummary = async (req: Request, res: Response) => {
   const userId = req.user?.id;
+  
+    // console.log("\n\n\nhell i am here \n\n\n");
 
   if (!userId) {
     res.status(401).json({ message: 'User not authenticated.' });
     return;
   }
+  
 
   try {
     // Aggregate meter readings by month for the authenticated user

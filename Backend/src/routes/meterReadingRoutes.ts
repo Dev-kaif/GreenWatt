@@ -18,6 +18,9 @@ router.post("/", protect, addMeterReading);
 
 router.get("/", protect, getMeterReadings);
 
+// get summary of monthly cunsumption for data visualaization
+router.get ('/summary', protect, getMonthlyConsumptionSummary);
+
 // Get a single meter reading by ID (GET /api/meter-readings/:id)
 router.get("/:id", protect, getMeterReadingById);
 
@@ -29,8 +32,6 @@ router.delete("/:id", protect, deleteMeterReading);
 
 router.post('/upload-csv', protect, uploadCsv, uploadMeterReadingsCsv);
 
-// get summary of monthly cunsumption for data visualaization
-router.get('/summary', protect, getMonthlyConsumptionSummary);
 
 
 export default router;

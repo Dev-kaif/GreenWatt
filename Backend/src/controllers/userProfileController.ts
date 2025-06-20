@@ -1,5 +1,7 @@
+// src/controllers/userProfileController.ts
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import { updateUserEmbedding } from "../services/updateUserEmbedding";
 
 const prisma = new PrismaClient();
 
@@ -56,6 +58,7 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     zipCode,
     targetReduction, // From UserProfile
     ecoGoals, // From UserProfile
+    electricityRatePerKWh, // NEW: Include electricityRatePerKWh from the request body
   } = req.body;
 
   if (!userId) {
@@ -85,18 +88,21 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
       // Update or Create UserProfile
       let updatedUserProfile;
-      if (targetReduction !== undefined || ecoGoals !== undefined) {
+      // Only proceed with upsert if any UserProfile-specific fields are provided
+      if (targetReduction !== undefined || ecoGoals !== undefined || electricityRatePerKWh !== undefined) {
         updatedUserProfile = await tx.userProfile.upsert({
           where: { userId: userId },
           update: {
             targetReduction:
               targetReduction !== undefined ? targetReduction : undefined,
             ecoGoals: ecoGoals !== undefined ? ecoGoals : undefined,
+            electricityRatePerKWh: electricityRatePerKWh !== undefined ? electricityRatePerKWh : undefined, // NEW: Update the field
           },
           create: {
             userId: userId,
             targetReduction: targetReduction,
             ecoGoals: ecoGoals,
+            electricityRatePerKWh: electricityRatePerKWh,
           },
         });
       }
@@ -106,6 +112,9 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
     // Exclude sensitive data like passwordHash
     const { passwordHash, ...userWithoutPassword } = updatedData.user;
+
+    // Call updateUserEmbedding after successful updates
+    await updateUserEmbedding(userId);
 
     res.status(200).json({
       message: "User profile updated successfully.",
