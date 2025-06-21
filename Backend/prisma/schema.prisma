@@ -85,29 +85,8 @@ model EnergyTip {
   updatedAt        DateTime          @updatedAt
   contextReadingId String?
   contextReading   MeterReading?     @relation("TipContext", fields: [contextReadingId], references: [id])
-  GeneralEnergyTip GeneralEnergyTip? @relation(fields: [generalTipId], references: [id])
+  // GeneralEnergyTip GeneralEnergyTip? @relation(fields: [generalTipId], references: [id])
   user             User              @relation(fields: [userId], references: [id])
-}
-
-model GlobalContent {
-  id          String   @id @default(uuid())
-  type        String
-  title       String?
-  content     String
-  source      String?
-  url         String?
-  publishedAt DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model AdminUser {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  role         String   @default("editor")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
 }
 
 model UserEmbedding {
@@ -123,14 +102,35 @@ model UserEmbedding {
   @@map("user_embeddings")
 }
 
-model GeneralEnergyTip {
-  id          String      @id
-  title       String
-  description String
-  category    String?
-  ecoLink     String?
-  imageUrl    String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime
-  EnergyTip   EnergyTip[]
-}
+// model GeneralEnergyTip {
+//   id          String      @id
+//   title       String
+//   description String
+//   category    String?
+//   ecoLink     String?
+//   imageUrl    String?
+//   createdAt   DateTime    @default(now())
+//   updatedAt   DateTime
+//   EnergyTip   EnergyTip[]
+// }
+
+// model GlobalContent {
+//   id          String   @id @default(uuid())
+//   type        String
+//   title       String?
+//   content     String
+//   source      String?
+//   url         String?
+//   publishedAt DateTime @default(now())
+//   createdAt   DateTime @default(now())
+//   updatedAt   DateTime @updatedAt
+// }
+
+// model AdminUser {
+//   id           String   @id @default(uuid())
+//   email        String   @unique
+//   passwordHash String
+//   role         String   @default("editor")
+//   createdAt    DateTime @default(now())
+//   updatedAt    DateTime @updatedAt
+// }
