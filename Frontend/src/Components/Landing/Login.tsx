@@ -289,12 +289,14 @@ export default function LoginPage() {
             >
               <p className="text-sm text-gray-600">
                 Don't have an account?{" "}
-                <a
-                  href="/auth/signup"
+                <button
+                  onClick={() => {
+                    navigate("/auth/signup");
+                  }}
                   className="text-primary hover:text-primary/80 font-medium transition-colors"
                 >
                   Sign up
-                </a>
+                </button>
               </p>
             </motion.div>
           </div>

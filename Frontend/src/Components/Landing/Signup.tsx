@@ -212,6 +212,11 @@ export default function SignupPage() {
     return "Strong";
   };
 
+
+  const handleLoginroute = ()=>{
+    navigate("/auth/login")
+  }
+
   return (
     <div className="min-h-screen py-10 relative bg-white flex items-center justify-center p-4">
       {/* Message Box for Success/Error */}
@@ -567,12 +572,12 @@ export default function SignupPage() {
             >
               <p className="text-sm text-gray-600">
                 Already have an account?{" "}
-                <a
-                  href="/auth/login"
+                <button
+                  onClick={handleLoginroute}
                   className="text-primary hover:text-primary/80 font-medium transition-colors"
                 >
                   Sign in
-                </a>
+                </button>
               </p>
             </motion.div>
           </div>
