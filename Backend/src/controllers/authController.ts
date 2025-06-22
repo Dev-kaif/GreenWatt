@@ -18,7 +18,8 @@ export const signup = async (req: Request, res: Response) => {
     });
 
     if (existingUser) {
-      return res.status(409).json({ message: "Email is already registered." });
+      res.status(409).json({ message: "Email is already registered." });
+      return;
     }
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
