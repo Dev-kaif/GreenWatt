@@ -5,7 +5,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export const signup = async (req: Request, res: Response) => {
-  const { email, password, firstName, lastName, householdSize } = req.body;
+  const { email, password, firstName, lastName } = req.body;
 
   if (!email || !password) {
     res.status(400).json({ message: "Email and password are required." });
@@ -13,6 +13,14 @@ export const signup = async (req: Request, res: Response) => {
   }
 
   try {
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      return res.status(409).json({ message: "Email is already registered." });
+    }
+
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -20,7 +28,6 @@ export const signup = async (req: Request, res: Response) => {
         data: {
           first_name: firstName,
           last_name: lastName,
-          household_size: householdSize,
         },
       },
     });
@@ -30,25 +37,14 @@ export const signup = async (req: Request, res: Response) => {
       return;
     }
 
-    // Supabase will send a confirmation email if email verification is enabled.
-    // authData.user will be null if email verification is pending and required.
-    // authData.user will contain the user if no email verification is needed or already verified.
-
     let userInOurDb;
     if (authData.user) {
-      // d (e.g., no email verification needed)
-      // 2. If Supabase signup successful and user object is returne
-      // Or if you want to create the user record immediately and update it later upon verification
       userInOurDb = await prisma.user.create({
         data: {
           id: authData.user.id, // Use Supabase user ID as our User ID
           email: authData.user.email!,
           firstName: firstName,
           lastName: lastName,
-          householdSize: householdSize,
-          // passwordHash is not stored here as Supabase manages it.
-          // You might store a placeholder or derived value if strictly necessary for your logic,
-          // but typically, for Supabase Auth, you rely on Supabase for password management.
         },
       });
     }
@@ -62,7 +58,7 @@ export const signup = async (req: Request, res: Response) => {
       supabaseUser: authData.user
         ? { id: authData.user.id, email: authData.user.email }
         : null,
-      session: authData.session, // Session token (if auto-logged in)
+      session: authData.session,
     });
     return;
   } catch (error: any) {

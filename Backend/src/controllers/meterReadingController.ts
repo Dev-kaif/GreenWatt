@@ -16,12 +16,9 @@ export const addMeterReading = async (req: Request, res: Response) => {
     consumptionKWH === undefined ||
     consumptionKWH === null
   ) {
-    res
-      .status(400)
-      .json({
-        message:
-          "Missing required fields: userId, readingDate, consumptionKWH.",
-      });
+    res.status(400).json({
+      message: "Missing required fields: userId, readingDate, consumptionKWH.",
+    });
     return;
   }
 
@@ -49,12 +46,10 @@ export const addMeterReading = async (req: Request, res: Response) => {
     });
 
     if (existingReading) {
-      res
-        .status(409)
-        .json({
-          message:
-            "A meter reading for this user and month already exists. Consider updating it instead.",
-        });
+      res.status(409).json({
+        message:
+          "A meter reading for this user and month already exists. Consider updating it instead.",
+      });
       return;
     }
 
@@ -96,26 +91,61 @@ export const getMeterReadings = async (req: Request, res: Response) => {
 
   if (!userId) {
     res.status(401).json({ message: "User not authenticated." });
-    return;
+    return 
   }
 
+  const limit = parseInt(req.query.limit as string) || 50;
+  const sort = req.query.sort as string || 'readingDate';
+  const order = req.query.order as 'asc' | 'desc' || 'desc';
+
+  const startDateParam = req.query.startDate as string;
+  const endDateParam = req.query.endDate as string;
+  const sourceParam = req.query.source as string;
+
   try {
+    const where: any = {
+      userId: userId,
+    };
+
+    if (startDateParam || endDateParam) {
+      where.readingDate = {};
+      if (startDateParam) {
+        where.readingDate.gte = new Date(startDateParam);
+      }
+      if (endDateParam) {
+        const end = new Date(endDateParam);
+        end.setDate(end.getDate() + 1);
+        where.readingDate.lt = end;
+      }
+    }
+
+    if (sourceParam && (sourceParam === 'manual' || sourceParam === 'csv_upload')) { 
+      where.source = sourceParam;
+    }
+
     const readings = await prisma.meterReading.findMany({
-      where: { userId: userId },
-      orderBy: { readingDate: "desc" }, // Order by most recent first
+      where: where,
+      take: limit,
+      orderBy: {
+        [sort]: order,
+      },
+    });
+
+    const totalCount = await prisma.meterReading.count({
+      where: where,
     });
 
     res.status(200).json({
       message: "Meter readings retrieved successfully.",
       readings: readings,
+      totalCount: totalCount,
     });
-    return;
+
   } catch (error: any) {
     console.error("Error retrieving meter readings:", error);
     res
       .status(500)
       .json({ message: "Internal server error.", error: error.message });
-    return;
   }
 };
 
@@ -138,11 +168,9 @@ export const getMeterReadingById = async (req: Request, res: Response) => {
     });
 
     if (!reading) {
-      res
-        .status(404)
-        .json({
-          message: "Meter reading not found or does not belong to user.",
-        });
+      res.status(404).json({
+        message: "Meter reading not found or does not belong to user.",
+      });
       return;
     }
 
@@ -164,7 +192,7 @@ export const getMeterReadingById = async (req: Request, res: Response) => {
 export const updateMeterReading = async (req: Request, res: Response) => {
   const userId = req.user?.id;
   const { id } = req.params; // Reading ID from URL parameter
-  const { readingDate, consumptionKWH, emissionCO2kg, source } = req.body;
+  const { consumptionKWH, emissionCO2kg, source } = req.body;
 
   if (!userId) {
     res.status(401).json({ message: "User not authenticated." });
@@ -173,7 +201,6 @@ export const updateMeterReading = async (req: Request, res: Response) => {
 
   // At least one field to update must be provided
   if (
-    readingDate === undefined &&
     consumptionKWH === undefined &&
     emissionCO2kg === undefined &&
     source === undefined
@@ -182,28 +209,21 @@ export const updateMeterReading = async (req: Request, res: Response) => {
     return;
   }
 
-  let parsedDate: Date | undefined;
-  if (readingDate !== undefined) {
-    parsedDate = new Date(readingDate);
-    if (isNaN(parsedDate.getTime())) {
-      res
-        .status(400)
-        .json({
-          message: "Invalid readingDate format. Please use YYYY-MM-DD.",
-        });
-      return;
-    }
-    parsedDate = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1); // Store as first day of month
+  if (req.body.readingDate !== undefined) {
+    res.status(400).json({
+      message:
+        "Reading date cannot be updated. Please create a new reading for a different date or update an existing one.",
+    });
+    return;
   }
 
   try {
-    const updatedReading = await prisma.meterReading.updateMany({
+    const updatedReading = await prisma.meterReading.update({
       where: {
         id: id,
-        userId: userId, // Ensure the reading belongs to the authenticated user
+        userId: userId,
       },
       data: {
-        readingDate: parsedDate,
         consumptionKWH:
           consumptionKWH !== undefined ? parseFloat(consumptionKWH) : undefined,
         emissionCO2kg:
@@ -213,36 +233,21 @@ export const updateMeterReading = async (req: Request, res: Response) => {
       },
     });
 
-    if (updatedReading.count === 0) {
-      res
-        .status(404)
-        .json({
-          message: "Meter reading not found or does not belong to user.",
-        });
-      return;
-    }
-
-    // Fetch the updated record to return it in the response
-    const recordToReturn = await prisma.meterReading.findUnique({
-      where: { id: id },
-    });
-
     await updateUserEmbedding(userId);
 
     res.status(200).json({
       message: "Meter reading updated successfully.",
-      reading: recordToReturn,
+      reading: updatedReading,
     });
+
     return;
   } catch (error: any) {
     console.error("Error updating meter reading:", error);
     if (error.code === "P2002") {
-      res
-        .status(409)
-        .json({
-          message: "A reading for this user and updated month already exists.",
-          error: error.message,
-        });
+      res.status(409).json({
+        message: "A reading for this user and updated month already exists.",
+        error: error.message,
+      });
       return;
     }
     res
@@ -271,13 +276,13 @@ export const deleteMeterReading = async (req: Request, res: Response) => {
     });
 
     if (deletedReading.count === 0) {
-      res
-        .status(404)
-        .json({
-          message: "Meter reading not found or does not belong to user.",
-        });
+      res.status(404).json({
+        message: "Meter reading not found or does not belong to user.",
+      });
       return;
     }
+
+    await updateUserEmbedding(userId);
 
     res.status(200).json({
       message: "Meter reading deleted successfully.",
@@ -292,7 +297,60 @@ export const deleteMeterReading = async (req: Request, res: Response) => {
   }
 };
 
-// upload csv data and handled 
+export const deleteMeterReadingsBulk = async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  const { ids } = req.body;
+
+  if (!userId) {
+    return res.status(401).json({ message: "User not authenticated." });
+  }
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res
+      .status(400)
+      .json({ message: "No IDs provided for bulk deletion." });
+  }
+
+  if (!ids.every((id) => typeof id === "string" && id.length > 0)) {
+    return res
+      .status(400)
+      .json({
+        message:
+          "Invalid ID format in the list. All IDs must be non-empty strings.",
+      });
+  }
+
+  try {
+    const deleteResult = await prisma.meterReading.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+        userId: userId,
+      },
+    });
+
+    await updateUserEmbedding(userId);
+
+    return res.status(200).json({
+      message: `${deleteResult.count} meter readings deleted successfully.`,
+      deletedCount: deleteResult.count,
+    });
+  } catch (error: any) {
+    console.error("Error performing bulk deletion:", error);
+
+    // --- Error Response ---
+    // Basic error handling; you can expand this with more specific Prisma error codes if needed.
+    return res
+      .status(500)
+      .json({
+        message: "Failed to perform bulk deletion.",
+        error: error.message,
+      });
+  }
+};
+
+// upload csv data and handled
 export const uploadMeterReadingsCsv = async (req: Request, res: Response) => {
   const userId = req.user?.id;
 
@@ -455,12 +513,10 @@ export const uploadMeterReadingsCsv = async (req: Request, res: Response) => {
         return;
       } catch (dbError: any) {
         console.error("Database error during CSV upload:", dbError);
-        res
-          .status(500)
-          .json({
-            message: "Database error during bulk upload.",
-            error: dbError.message,
-          });
+        res.status(500).json({
+          message: "Database error during bulk upload.",
+          error: dbError.message,
+        });
         return;
       }
     },
@@ -474,49 +530,51 @@ export const uploadMeterReadingsCsv = async (req: Request, res: Response) => {
   });
 };
 
-
 // Get Monthly Consumption Summary for Visualization
-export const getMonthlyConsumptionSummary = async (req: Request, res: Response) => {
+export const getMonthlyConsumptionSummary = async (
+  req: Request,
+  res: Response
+) => {
   const userId = req.user?.id;
-  
-    // console.log("\n\n\nhell i am here \n\n\n");
+
+  // console.log("\n\n\nhell i am here \n\n\n");
 
   if (!userId) {
-    res.status(401).json({ message: 'User not authenticated.' });
+    res.status(401).json({ message: "User not authenticated." });
     return;
   }
-  
 
   try {
     // Aggregate meter readings by month for the authenticated user
     const monthlySummary = await prisma.meterReading.groupBy({
-      by: ['readingDate'], // Group by the first day of the month
+      by: ["readingDate"], // Group by the first day of the month
       where: { userId: userId },
       _sum: {
         consumptionKWH: true,
         emissionCO2kg: true,
       },
       orderBy: {
-        readingDate: 'asc', // Order chronologically for trends
+        readingDate: "asc", // Order chronologically for trends
       },
     });
 
     // Format the data for easier frontend consumption
-    const formattedSummary = monthlySummary.map(item => ({
+    const formattedSummary = monthlySummary.map((item) => ({
       month: item.readingDate.toISOString().substring(0, 7), // Format as YYYY-MM
       totalConsumptionKWH: item._sum.consumptionKWH || 0,
       totalEmissionCO2kg: item._sum.emissionCO2kg || 0,
     }));
 
     res.status(200).json({
-      message: 'Monthly consumption summary retrieved successfully.',
+      message: "Monthly consumption summary retrieved successfully.",
       summary: formattedSummary,
     });
     return;
-
   } catch (error: any) {
-    console.error('Error retrieving monthly consumption summary:', error);
-    res.status(500).json({ message: 'Internal server error.', error: error.message });
+    console.error("Error retrieving monthly consumption summary:", error);
+    res
+      .status(500)
+      .json({ message: "Internal server error.", error: error.message });
     return;
   }
 };

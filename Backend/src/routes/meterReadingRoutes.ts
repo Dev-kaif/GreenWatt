@@ -27,6 +27,9 @@ router.get("/:id", protect, getMeterReadingById);
 // Update a meter reading by ID (PUT /api/meter-readings/:id)
 router.put("/:id", protect, updateMeterReading);
 
+// Delete in bluk
+router.delete("/bulk", protect, deleteMeterReading);
+
 // Delete a meter reading by ID (DELETE /api/meter-readings/:id)
 router.delete("/:id", protect, deleteMeterReading);
 

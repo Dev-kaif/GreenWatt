@@ -1,7 +1,7 @@
 // src/services/updateUserEmbedding.ts
 
 import { PrismaClient } from '@prisma/client';
-import { getSupabaseVectorStore } from '../utils/vectorStore'; 
+import { supabase, embeddings } from '../utils/vectorStore'; 
 
 const prisma = new PrismaClient();
 
@@ -19,15 +19,12 @@ export const updateUserEmbedding = async (userId: string) => {
       },
     });
 
-    console.log(user);
-    
-
     if (!user || !user.userProfile) {
       console.warn(`User or UserProfile not found for ID: ${userId}. Cannot generate embedding.`);
       return;
     }
 
-    // 2. Prepare the text content to be embedded
+    // 1. Prepare the text content to be embedded
     let userEnergyProfileText = `User ID: ${user.id}. `;
     userEnergyProfileText += `Household size: ${user.householdSize || 'unknown'}. `;
     userEnergyProfileText += `Eco goals: ${user.userProfile.ecoGoals || 'not specified'}. `;
@@ -53,18 +50,27 @@ export const updateUserEmbedding = async (userId: string) => {
       userEnergyProfileText += `No appliances listed.`;
     }
 
-    // 3. Get the Supabase vector store instance
-    const vectorStore = await getSupabaseVectorStore('user_embeddings', 'match_user_embeddings');
+    const userEmbeddingVector = await embeddings.embedQuery(userEnergyProfileText);
 
-    await vectorStore.addDocuments([
+    const { data, error } = await supabase.from('user_embeddings').upsert(
       {
-        pageContent: userEnergyProfileText,
+        userId: user.id, 
+        content: userEnergyProfileText, 
+        embedding: userEmbeddingVector, 
         metadata: { userId: user.id, userProfileId: user.userProfile.id, type: 'user_profile' },
       },
-    ]);
-    
+      {
+        onConflict: 'userId', 
+        ignoreDuplicates: false, 
+      }
+    );
 
-    console.log(`Embedding for user ${userId} generated and stored in Supabase via LangChain.`);
+    if (error) {
+      throw new Error(`Supabase upsert error: ${error.message}`);
+    }
+
+    console.log(`Embedding for user ${userId} upserted successfully. Data:`, data);
+
   } catch (error: any) {
     console.error(`Error generating or updating embedding for user ${userId}:`, error);
   }

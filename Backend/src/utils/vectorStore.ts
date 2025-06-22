@@ -5,16 +5,15 @@ import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { SupabaseVectorStore } from "@langchain/community/vectorstores/supabase";
 import { SUPABASE_SERVICE_ROLE_KEY, supabaseUrl } from "../config/config";
 
-// Use service role key for backend for better security
 
 // Initialize Supabase client
-const supabase: SupabaseClient = createClient(
+export const supabase: SupabaseClient = createClient(
   supabaseUrl,
   SUPABASE_SERVICE_ROLE_KEY
 );
 
 // Initialize LangChain's Google Generative AI Embeddings
-const embeddings = new GoogleGenerativeAIEmbeddings({
+export const embeddings = new GoogleGenerativeAIEmbeddings({
   apiKey: process.env.GEMINI_API_KEY,
   model: "gemini-embedding-exp-03-07",
 });

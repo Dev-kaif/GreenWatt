@@ -26,6 +26,7 @@ model User {
   tips          EnergyTip[]
   readings      MeterReading[]
   userProfile   UserProfile?
+  userEmbedding UserEmbedding?
 }
 
 model UserProfile {
@@ -73,32 +74,30 @@ model MeterReading {
 }
 
 model EnergyTip {
-  id               String            @id @default(uuid())
+  id               String        @id @default(uuid())
   userId           String
   generalTipId     String?
   tipText          String
   relevanceScore   Float?
   applicableMonth  DateTime?
-  isDismissed      Boolean           @default(false)
-  isImplemented    Boolean           @default(false)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  isDismissed      Boolean       @default(false)
+  isImplemented    Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
   contextReadingId String?
-  contextReading   MeterReading?     @relation("TipContext", fields: [contextReadingId], references: [id])
-  // GeneralEnergyTip GeneralEnergyTip? @relation(fields: [generalTipId], references: [id])
-  user             User              @relation(fields: [userId], references: [id])
+  contextReading   MeterReading? @relation("TipContext", fields: [contextReadingId], references: [id])
+  user             User          @relation(fields: [userId], references: [id])
 }
 
 model UserEmbedding {
-  id         String                 @id @default(dbgenerated("gen_random_uuid()"))
-  createdAt  DateTime               @default(now())
-  updatedAt  DateTime?              @default(now()) @updatedAt
-  embedding  Unsupported("vector")?
-  metadata   Json?
-  created_at DateTime?              @default(now()) @db.Timestamptz(6)
-  updated_at DateTime?              @default(now()) @db.Timestamptz(6)
-  content    String?
-
+  id        String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String                 @unique
+  embedding Unsupported("vector")?
+  metadata  Json?
+  content   String?
+  createdAt DateTime               @default(now())
+  updatedAt DateTime?              @default(now()) @updatedAt
+  user      User                   @relation(fields: [userId], references: [id])
   @@map("user_embeddings")
 }
 

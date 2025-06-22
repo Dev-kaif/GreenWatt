@@ -1,18 +1,16 @@
-// src/services/tipGenerationService.ts
-
 import { PrismaClient } from "@prisma/client";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { RunnableSequence } from "@langchain/core/runnables";
-import { getSupabaseVectorStore } from "../utils/vectorStore"; // Assuming this path is correct
+import { getSupabaseVectorStore } from "../utils/vectorStore";
 import { HumanMessage } from "@langchain/core/messages";
-import { GEMINI_API_KEY } from "../config/config"; // Assuming GEMINI_API_KEY is available here
+import { GEMINI_API_KEY } from "../config/config";
 
 const prisma = new PrismaClient();
 
 const chatModel = new ChatGoogleGenerativeAI({
-  apiKey: GEMINI_API_KEY, // Ensure this is securely handled in your environment
+  apiKey: GEMINI_API_KEY,
   model: "gemini-2.0-flash",
   temperature: 0.3,
 });
@@ -32,8 +30,8 @@ function stripMarkdown(text: string): string {
     .trim();
 }
 
-// This function will fetch a simplified summary of user data to feed into the LLM prompt.
-export const getUserContextForTips = async (userId: string) => {
+
+const getUserContextForTips = async (userId: string) => {
   try {
     // Fetch recent meter readings (e.g., last 3 months)
     const recentReadings = await prisma.meterReading.findMany({
@@ -116,7 +114,7 @@ export const getUserContextForTips = async (userId: string) => {
       });
     }
 
-    return contextString.trim(); // Return the constructed context string
+    return contextString.trim();
   } catch (error) {
     console.error("Error getting user context for tips:", error);
     return "";
@@ -124,14 +122,11 @@ export const getUserContextForTips = async (userId: string) => {
 };
 
 // This function now uses LangChain's vector store for similarity search
-export const findSimilarUsersContext = async (
-  userId: string,
-  limit: number = 3
-) => {
+const findSimilarUsersContext = async (userId: string, limit: number = 3) => {
   try {
     const vectorStore = await getSupabaseVectorStore(
       "user_embeddings",
-      "match_documents" // Assuming your Supabase function is named 'match_documents'
+      "match_user_embeddings"
     );
 
     // Fetch the current user's profile data to create a query embedding
@@ -146,7 +141,6 @@ export const findSimilarUsersContext = async (
 
     if (!user) return "";
 
-    // Reconstruct the text content of the current user's profile for embedding query
     let currentUserProfileTextForEmbedding = `User ID: ${user.id}. `;
     currentUserProfileTextForEmbedding += `Household size: ${
       user.householdSize || "unknown"
@@ -192,30 +186,32 @@ export const findSimilarUsersContext = async (
       currentUserProfileTextForEmbedding += `No appliances listed.`;
     }
 
-    // Use LangChain's similaritySearch to find similar documents (user profiles)
     const similarDocs = await vectorStore.similaritySearch(
-      currentUserProfileTextForEmbedding, // Query text to find similar embeddings
-      limit + 1, // Fetch one more than needed to exclude self if not already filtered by DB function
-      // Filter out the current user's own document based on metadata
-      { userId_ne: userId } // Assuming 'userId_ne' filter works with your vector store integration
+      currentUserProfileTextForEmbedding, 
+      limit + 1,
+      // { userId_ne: userId }
     );
+
+    console.log("\n\n\n\n\ currentUserProfileTextForEmbedding :",currentUserProfileTextForEmbedding,"\n\n\n\n\n\n");
+    console.log("\n\n\n\n\ simialr docx :",similarDocs,"\n\n\n\n\n\n");
+    
 
     let context = "";
     const filteredDocs = similarDocs.filter(
       (doc) => doc.metadata.userId !== userId
-    ); // Double-check self-exclusion
-    const relevantDocs = filteredDocs.slice(0, limit); // Take only the requested limit
+    );
+    const relevantDocs = filteredDocs.slice(0, limit);
 
     if (relevantDocs && relevantDocs.length > 0) {
       context = `\n\nInsights from similar users with similar energy patterns:\n`;
       relevantDocs.forEach((doc, index) => {
         const similarUserId = doc.metadata.userId;
-        const similarUserContent = doc.pageContent; // The text content of the similar user's profile
+        const similarUserContent = doc.pageContent;
         context += `- Similar user ${
           index + 1
         } (ID: ${similarUserId}) profile snippet:\n"${similarUserContent.substring(
           0,
-          Math.min(similarUserContent.length, 200) // Trim content to avoid excessively long prompts
+          Math.min(similarUserContent.length, 200)
         )}..."\n`;
       });
     }
@@ -226,25 +222,14 @@ export const findSimilarUsersContext = async (
   }
 };
 
-// Modified: generatePersonalizedTips now accepts an optional userQuery
 export const generatePersonalizedTips = async (
   userId: string,
   userQuery?: string
 ) => {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        userProfile: true,
-        readings: {
-          orderBy: { readingDate: "desc" },
-          take: 12,
-        },
-        appliances: true,
-      },
-    });
+    const currentUserContext = await getUserContextForTips(userId);
 
-    if (!user || !user.userProfile) {
+    if (!currentUserContext) {
       return [
         {
           tipText:
@@ -253,49 +238,9 @@ export const generatePersonalizedTips = async (
       ];
     }
 
-    const currentUserContext = `
-User Profile:
-- Household Size: ${user.householdSize || "Unknown"}
-- Eco Goals: "${user.userProfile.ecoGoals || "Not specified"}"
-- Target Reduction: ${
-      user.userProfile.targetReduction
-        ? `${user.userProfile.targetReduction}%`
-        : "Not set"
-    }
-- Location: ${user.city || "Unknown"}, ${user.state || "Unknown"}
+    const similarUsersContext = await findSimilarUsersContext(userId, 3);
 
-Recent Energy Consumption (kWh, CO2):
-${
-  user.readings.length > 0
-    ? user.readings
-        .map(
-          (r) =>
-            `- ${r.readingDate.toISOString().substring(0, 7)}: ${
-              r.consumptionKWH
-            } kWh (${r.emissionCO2kg || 0} kg CO₂)`
-        )
-        .join("\n")
-    : "No recent meter readings available."
-}
-
-Appliances:
-${
-  user.appliances.length > 0
-    ? user.appliances
-        .map(
-          (a) =>
-            `- ${a.type} (Model: ${a.modelName || "N/A"}, ${
-              a.powerConsumptionWatts || "?"
-            }W, Efficiency: ${a.energyEfficiencyRating || "N/A"}, Used: ${
-              a.averageDailyUsageHours || "?"
-            } hrs/day)`
-        )
-        .join("\n")
-    : "No appliances listed."
-}
-    `;
-
-    // const similarUsersContext = await findSimilarUsersContext(userId, 3);
+    // console.log("\n\n\n\n\n", similarUsersContext, "\n\n\n\n\n\n");
 
     const promptTemplate = ChatPromptTemplate.fromMessages([
       [
@@ -320,6 +265,11 @@ ${
       [
         "human",
         `Here is the user's energy usage and household profile:\n\n{currentUserContext}
+        ${
+          similarUsersContext.trim()
+            ? `\n\n and similar household context : ${similarUsersContext.trim()}`
+            : ""
+        }
         The user asked:\n"{userQuery}"
 
         Please provide a personalized, impactful energy-saving tip.`,
@@ -334,15 +284,15 @@ ${
 
     const generatedText = await chain.invoke({
       currentUserContext: currentUserContext.trim(),
-      // similarUsersContext: similarUsersContext.trim(),
+      // similarUsersContext is included directly in the prompt, so no need for a separate template variable
       userQuery: userQuery || "No specific question provided",
     });
 
     // Optional: Clean up generic AI openers
     const cleanedText = stripMarkdown(
       generatedText
-        .replace(/^okay[,.\s]*/i, "") 
-        .replace(/^I understand.*?:\s*/i, "") 
+        .replace(/^okay[,.\s]*/i, "")
+        .replace(/^I understand.*?:\s*/i, "")
         .trim()
     );
 
