@@ -18,7 +18,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex w-full">
+    <div className="min-h-screen bg-gray-50 w-full">
       <Sidebar
         activeSection={activeSection}
         onSectionChange={handleSectionChange}

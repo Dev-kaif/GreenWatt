@@ -13,12 +13,60 @@ import {
   Target,
   Goal,
   IndianRupee,
+  DollarSign, // Added for total savings icon
+  CloudRain,
+  CheckCircle, // Added for CO2 reduction icon
 } from "lucide-react";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence, type TargetAndTransition, type Transition, type Variants } from "framer-motion"; // Import AnimatePresence, TargetAndTransition, Transition
 import axiosInstance from "../../utils/axios";
 
-// MessageBox component (re-used for consistency)
+// --- Animation Variants ---
+
+// General page entry animation
+const pageVariants:Variants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+};
+
+// Message Box animation
+const messageBoxVariants:Variants = {
+  initial: { opacity: 0, y: -50 },
+  animate: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 150, damping: 20 } },
+  exit: { opacity: 0, y: -50, transition: { duration: 0.3 } },
+};
+
+// Common button press animation
+const buttonPress: TargetAndTransition = {
+  scale: 0.95,
+  y: 1,
+  transition: { type: "spring", stiffness: 300, damping: 10 } as Transition
+};
+
+// Common input focus animation
+const inputFocus: TargetAndTransition = {
+  scale: 1.005,
+  boxShadow: "0 0 0 4px rgba(74, 222, 128, 0.2)", // Primary color with transparency
+  transition: { type: "spring", stiffness: 200, damping: 15 } as Transition
+};
+
+// Stagger container for grid items (e.g., summary cards)
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1, // Stagger items by 0.1 seconds
+    },
+  },
+};
+
+// Item variant for staggered children
+const itemVariants:Variants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+};
+
+
+// MessageBox component
 const MessageBox = ({
   message,
   type,
@@ -28,41 +76,33 @@ const MessageBox = ({
   type: "success" | "error";
   onClose: () => void;
 }) => (
-  <div
-    className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4`}
-  >
-    <div
-      className={`bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center ${
-        type === "success" ? "border-green-500" : "border-red-500"
-      } border-2`}
+  <AnimatePresence>
+    <motion.div
+      variants={messageBoxVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className={`fixed top-4 left-1/2 -translate-x-1/2 bg-white p-4 rounded-lg shadow-xl z-50 flex items-center space-x-3 border-2 ${type === "success" ? "border-green-500" : "border-red-500"}`}
     >
-      <p
-        className={`text-lg font-semibold mb-4 ${
-          type === "success" ? "text-green-700" : "text-red-700"
-        }`}
-      >
+      {type === "success" ? (
+        <CheckCircle className="w-6 h-6 text-green-500" />
+      ) : (
+        <XCircle className="w-6 h-6 text-red-500" />
+      )}
+      <p className={`text-lg font-semibold ${type === "success" ? "text-green-700" : "text-red-700"}`}>
         {message}
       </p>
-      <button
+      <motion.button
         onClick={onClose}
-        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-          type === "success"
-            ? "bg-green-500 hover:bg-green-600"
-            : "bg-red-500 hover:bg-red-600"
-        } text-white`}
+        className={`ml-4 px-3 py-1 rounded-lg font-medium transition-colors ${type === "success" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"} text-white`}
+        whileHover={{ scale: 1.05 }}
+        whileTap={buttonPress}
       >
         OK
-      </button>
-    </div>
-  </div>
+      </motion.button>
+    </motion.div>
+  </AnimatePresence>
 );
-
-// Animation variants (re-used for consistency)
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5, ease: "easeOut" },
-};
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -244,11 +284,14 @@ const Profile = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <svg
-          className="animate-spin h-8 w-8 text-green-primary"
+        <motion.svg
+          className="animate-spin h-8 w-8 text-primary"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
         >
           <circle
             className="opacity-25"
@@ -263,23 +306,33 @@ const Profile = () => {
             fill="currentColor"
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
           ></path>
-        </svg>
-        <p className="ml-4 text-green-primary">Loading profile...</p>
+        </motion.svg>
+        <p className="ml-4 text-primary">Loading profile...</p>
       </div>
     );
   }
 
-  if (error && !successMessage) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+  // Render message boxes only if they exist
+  // We wrap them in AnimatePresence because they are conditionally rendered
+  const renderMessageBoxes = () => (
+    <AnimatePresence>
+      {successMessage && (
+        <MessageBox
+          message={successMessage}
+          type="success"
+          onClose={() => setSuccessMessage(null)}
+        />
+      )}
+      {error && !successMessage && ( // Only show error if no success message is present
         <MessageBox
           message={error}
           type="error"
           onClose={() => setError(null)}
         />
-      </div>
-    );
-  }
+      )}
+    </AnimatePresence>
+  );
+
 
   const userEmail = profileData?.email || "N/A";
   const joinDate = profileData?.createdAt
@@ -291,21 +344,8 @@ const Profile = () => {
     : "N/A";
 
   return (
-    <motion.div variants={fadeInUp} className="animate-fade-in p-4">
-      {successMessage && (
-        <MessageBox
-          message={successMessage}
-          type="success"
-          onClose={() => setSuccessMessage(null)}
-        />
-      )}
-      {error && (
-        <MessageBox
-          message={error}
-          type="error"
-          onClose={() => setError(null)}
-        />
-      )}
+    <motion.div initial="initial" animate="animate" variants={pageVariants} className="p-4 sm:p-6 lg:p-8">
+      {renderMessageBoxes()} {/* Render message boxes here */}
 
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-text-primary mb-2">Profile</h1>
@@ -317,7 +357,12 @@ const Profile = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Profile Information */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl shadow-card p-6 mb-6">
+          <motion.div
+            variants={itemVariants}
+            className="bg-white rounded-2xl shadow-card p-6 mb-6"
+            whileHover={{ y: -5, boxShadow: "0 10px 20px rgba(0, 0, 0, 0.08)" }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          >
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
@@ -327,13 +372,17 @@ const Profile = () => {
                   Personal & Household Information
                 </h2>
               </div>
-              <button
-                onClick={handleEditClick}
-                className="flex items-center space-x-2 px-4 py-2 text-green-primary hover:bg-green-50 rounded-lg transition-colors"
-              >
-                <Edit3 className="w-4 h-4" />
-                <span>Edit</span>
-              </button>
+              {!isEditing && ( // Only show edit button when not editing
+                <motion.button
+                  onClick={handleEditClick}
+                  className="flex items-center space-x-2 px-4 py-2 text-primary hover:bg-green-50 rounded-lg transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={buttonPress}
+                >
+                  <Edit3 className="w-4 h-4" />
+                  <span>Edit</span>
+                </motion.button>
+              )}
             </div>
 
             <form onSubmit={handleProfileSubmit}>
@@ -342,13 +391,14 @@ const Profile = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     First Name
                   </label>
-                  <input
+                  <motion.input
                     type="text"
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleFormChange}
                     disabled={!isEditing}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                    whileFocus={inputFocus}
                   />
                 </div>
 
@@ -356,13 +406,14 @@ const Profile = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Last Name
                   </label>
-                  <input
+                  <motion.input
                     type="text"
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleFormChange}
                     disabled={!isEditing}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                    whileFocus={inputFocus}
                   />
                 </div>
 
@@ -376,7 +427,7 @@ const Profile = () => {
                       type="email"
                       value={userEmail} // Email is fetched but not editable
                       disabled={true} // Email is immutable via this form
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-primary focus:border-transparent transition-all bg-gray-100 cursor-not-allowed"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-gray-100 cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -387,14 +438,15 @@ const Profile = () => {
                   </label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
+                    <motion.input
                       type="tel"
                       name="phoneNumber"
                       value={formData.phoneNumber}
                       onChange={handleFormChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
                       placeholder="+1 (555) 123-4567"
+                      whileFocus={inputFocus}
                     />
                   </div>
                 </div>
@@ -410,14 +462,15 @@ const Profile = () => {
                   </label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                    <textarea
+                    <motion.textarea
                       name="address"
                       value={formData.address}
                       onChange={handleFormChange}
                       disabled={!isEditing}
                       rows={2}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed resize-none"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed resize-none"
                       placeholder="e.g., 123 Main St"
+                      whileFocus={inputFocus}
                     />
                   </div>
                 </div>
@@ -425,42 +478,45 @@ const Profile = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     City
                   </label>
-                  <input
+                  <motion.input
                     type="text"
                     name="city"
                     value={formData.city}
                     onChange={handleFormChange}
                     disabled={!isEditing}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
                     placeholder="e.g., Eco City"
+                    whileFocus={inputFocus}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     State
                   </label>
-                  <input
+                  <motion.input
                     type="text"
                     name="state"
                     value={formData.state}
                     onChange={handleFormChange}
                     disabled={!isEditing}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
                     placeholder="e.g., CA"
+                    whileFocus={inputFocus}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Zip Code
                   </label>
-                  <input
+                  <motion.input
                     type="text"
                     name="zipCode"
                     value={formData.zipCode}
                     onChange={handleFormChange}
                     disabled={!isEditing}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
                     placeholder="e.g., 90210"
+                    whileFocus={inputFocus}
                   />
                 </div>
               </div>
@@ -472,21 +528,21 @@ const Profile = () => {
                   </label>
                   <div className="relative">
                     <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <select
+                    <motion.select
                       name="householdSize"
                       value={formData.householdSize}
                       onChange={handleFormChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                      whileFocus={inputFocus}
                     >
                       <option value="">Select...</option>{" "}
-                      {/* Added a default empty option */}
                       <option value="1">1 person</option>
                       <option value="2">2 people</option>
                       <option value="3">3 people</option>
                       <option value="4">4 people</option>
                       <option value="5">5+ people</option>
-                    </select>
+                    </motion.select>
                   </div>
                 </div>
 
@@ -497,16 +553,17 @@ const Profile = () => {
                   </label>
                   <div className="relative">
                     <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
+                    <motion.input
                       type="number"
                       name="electricityRatePerKWh"
                       value={formData.electricityRatePerKWh}
                       onChange={handleFormChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
                       placeholder="e.g., 0.15"
                       min="0"
-                      step="0.001" // Allow decimal input
+                      step="0.001"
+                      whileFocus={inputFocus}
                     />
                   </div>
                 </div>
@@ -518,17 +575,18 @@ const Profile = () => {
                   </label>
                   <div className="relative">
                     <Target className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
+                    <motion.input
                       type="number"
                       name="targetReduction"
                       value={formData.targetReduction}
                       onChange={handleFormChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
                       placeholder="e.g., 15"
                       min="0"
                       max="100"
                       step="1"
+                      whileFocus={inputFocus}
                     />
                   </div>
                 </div>
@@ -538,84 +596,109 @@ const Profile = () => {
                   </label>
                   <div className="relative">
                     <Goal className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
+                    <motion.input
                       type="text"
                       name="ecoGoals"
                       value={formData.ecoGoals}
                       onChange={handleFormChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
                       placeholder="e.g., Use less AC"
+                      whileFocus={inputFocus}
                     />
                   </div>
                 </div>
               </div>
 
-              {isEditing && (
-                <div className="mt-8 flex justify-end space-x-4">
-                  <button
-                    type="button"
-                    onClick={handleCancelEdit}
-                    disabled={isSubmitting}
-                    className="flex items-center space-x-2 px-6 py-3 rounded-xl font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              <AnimatePresence> {/* Use AnimatePresence for conditional rendering of buttons */}
+                {isEditing && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.3 }}
+                    className="mt-8 flex justify-end space-x-4"
                   >
-                    <XCircle className="w-5 h-5" />
-                    <span>Cancel</span>
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex items-center space-x-2 bg-primary text-white py-3 px-6 rounded-xl font-semibold hover:bg-green-600 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? (
-                      <svg
-                        className="animate-spin h-5 w-5 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                    ) : (
-                      <>
-                        <span>Save Changes</span>
-                        <Save className="w-5 h-5" />
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
+                    <motion.button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      disabled={isSubmitting}
+                      className="flex items-center space-x-2 px-6 py-3 rounded-xl font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={buttonPress}
+                    >
+                      <XCircle className="w-5 h-5" />
+                      <span>Cancel</span>
+                    </motion.button>
+                    <motion.button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex items-center space-x-2 bg-primary text-white py-3 px-6 rounded-xl font-semibold hover:bg-green-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={buttonPress}
+                    >
+                      {isSubmitting ? (
+                        <motion.svg
+                          className="h-5 w-5 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </motion.svg>
+                      ) : (
+                        <>
+                          <span>Save Changes</span>
+                          <Save className="w-5 h-5" />
+                        </>
+                      )}
+                    </motion.button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </form>
-          </div>
+          </motion.div>
         </div>
 
         {/* Account Summary */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl shadow-card p-6">
+        <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-6">
+          <motion.div
+            variants={itemVariants}
+            className="bg-white rounded-2xl shadow-card p-6"
+            whileHover={{ y: -5, boxShadow: "0 10px 20px rgba(0, 0, 0, 0.08)" }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          >
             <h3 className="text-lg font-semibold text-text-primary mb-4">
               Account Summary
             </h3>
             <div className="space-y-4">
-              <div className="flex items-center justify-center mb-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-green-primary to-green-600 rounded-full flex items-center justify-center">
+              <motion.div
+                className="flex items-center justify-center mb-6"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
+              >
+                <div className="w-20 h-20 bg-gradient-to-br from-primary to-green-600 rounded-full flex items-center justify-center">
                   <span className="text-white font-bold text-2xl">
                     {profileData?.firstName ? profileData.firstName[0] : ""}
                     {profileData?.lastName ? profileData.lastName[0] : ""}
                   </span>
                 </div>
-              </div>
+              </motion.div>
 
               <div className="text-center">
                 <h4 className="font-semibold text-text-primary text-lg">
@@ -635,51 +718,78 @@ const Profile = () => {
                   <span className="text-gray-600">Electricity Rate:</span>
                   <span className="font-medium text-text-primary">
                     {profileData?.userProfile?.electricityRatePerKWh !== null && profileData?.userProfile?.electricityRatePerKWh !== undefined
-                      ? `₹${profileData.userProfile.electricityRatePerKWh.toFixed(3)}/kWh` // Display with 3 decimal places
+                      ? `₹${profileData.userProfile.electricityRatePerKWh.toFixed(3)}/kWh`
                       : 'Not set'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  {/* Total Savings */}
-                  <span className="text-gray-600">
-                    {totalSavings !== null && totalSavings < 0 ? "Extra Cost:" : "Total Savings:"}
+                  <span className="text-gray-600 flex items-center space-x-1">
+                    <DollarSign className="w-4 h-4 text-gray-500" />
+                    <span>{totalSavings !== null && totalSavings < 0 ? "Extra Cost:" : "Total Savings:"}</span>
                   </span>
-                  <span className={`font-medium ${totalSavings !== null && totalSavings < 0 ? "text-red-500" : "text-green-600"}`}>
+                  <motion.span
+                    className={`font-medium ${totalSavings !== null && totalSavings < 0 ? "text-red-500" : "text-green-600"}`}
+                    key={totalSavings} // Key for re-animation on value change
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
                     {totalSavings !== null
                       ? `₹${Math.abs(totalSavings).toLocaleString('en-IN')}`
                       : isLoading ? "Calculating..." : "N/A"}
-                  </span>
+                  </motion.span>
                 </div>
                 <div className="flex items-center justify-between">
-                  {/* CO2 Reduction */}
-                  <span className="text-gray-600">
-                    {totalCo2Reduction !== null && totalCo2Reduction < 0 ? "CO2 Increase:" : "CO2 Reduction:"}
+                  <span className="text-gray-600 flex items-center space-x-1">
+                    <CloudRain className="w-4 h-4 text-gray-500" />
+                    <span>{totalCo2Reduction !== null && totalCo2Reduction < 0 ? "CO2 Increase:" : "CO2 Reduction:"}</span>
                   </span>
-                  <span className={`font-medium ${totalCo2Reduction !== null && totalCo2Reduction < 0 ? "text-red-500" : "text-green-600"}`}>
+                  <motion.span
+                    className={`font-medium ${totalCo2Reduction !== null && totalCo2Reduction < 0 ? "text-red-500" : "text-green-600"}`}
+                    key={totalCo2Reduction} // Key for re-animation on value change
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
                     {totalCo2Reduction !== null
                       ? `${Math.abs(totalCo2Reduction).toFixed(2)} tons`
                       : isLoading ? "Calculating..." : "N/A"}
-                  </span>
+                  </motion.span>
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="bg-gradient-to-br from-green-primary to-green-600 rounded-2xl p-6 text-white">
+          <motion.div
+            variants={itemVariants}
+            className="bg-gradient-to-br from-primary to-green-600 rounded-2xl p-6 text-white"
+            whileHover={{ y: -5, boxShadow: "0 10px 20px rgba(0, 0, 0, 0.08)" }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          >
             <h3 className="text-lg font-semibold mb-2">
               Energy Efficiency Score
             </h3>
             <div className="text-center">
-              <div className="text-4xl font-bold mb-2">85%</div>{" "}
-              {/* Still a Placeholder */}
+              <motion.div
+                className="text-4xl font-bold mb-2"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3, type: "spring", stiffness: 200, damping: 15 }}
+              >
+                85%
+              </motion.div>
               <p className="text-green-100">You're doing great!</p>
             </div>
             <div className="mt-4 bg-white/50 rounded-full h-2">
-              <div className="bg-white rounded-full h-2 w-4/5"></div>{" "}
-              {/* Placeholder for progress bar */}
+              <motion.div
+                className="bg-white rounded-full h-2 w-4/5"
+                initial={{ width: 0 }}
+                animate={{ width: "85%" }} // Match the 85% score
+                transition={{ delay: 0.5, duration: 1.5, ease: "easeOut" }}
+              ></motion.div>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
     </motion.div>
   );

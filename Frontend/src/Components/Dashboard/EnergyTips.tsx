@@ -1,28 +1,37 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/pages/EnergyTips.tsx
-import { useState, useEffect} from 'react';
-import { Lightbulb, RefreshCw, Sparkles, AlertCircle, Send } from 'lucide-react'; // Adjusted icons
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { Lightbulb, RefreshCw, Sparkles, AlertCircle, Send } from 'lucide-react';
+import { motion, type Transition } from 'framer-motion';
 import axiosInstance from '../../utils/axios'; // Adjust path if needed
 
 // MessageBox component (re-used for consistency)
 const MessageBox = ({ message, type, onClose }: { message: string; type: "success" | "error"; onClose: () => void }) => (
-  <div className={`fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4`}>
-    <div className={`bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center ${type === "success" ? "border-green-500" : "border-red-500"} border-2`}>
-      <p className={`text-lg font-semibold mb-4 ${type === "success" ? "text-green-700" : "text-red-700"}`}>
-        {message}
-      </p>
-      <button
-        onClick={onClose}
-        className={`px-4 py-2 rounded-lg font-medium transition-colors ${type === "success" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"} text-white`}
-      >
-        OK
-      </button>
-    </div>
-  </div>
+  <motion.div
+    initial={{ opacity: 0, y: -50 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -50 }}
+    transition={{ duration: 0.3 }}
+    className={`fixed top-4 left-1/2 -translate-x-1/2 bg-white p-4 rounded-lg shadow-xl z-50 flex items-center space-x-3 ${type === "success" ? "border-green-500" : "border-red-500"} border-2`}
+  >
+    {type === "success" ? (
+      <Sparkles className="w-6 h-6 text-green-500" />
+    ) : (
+      <AlertCircle className="w-6 h-6 text-red-500" />
+    )}
+    <p className={`text-lg font-semibold ${type === "success" ? "text-green-700" : "text-red-700"}`}>
+      {message}
+    </p>
+    <button
+      onClick={onClose}
+      className={`ml-4 px-3 py-1 rounded-lg font-medium transition-colors ${type === "success" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"} text-white`}
+    >
+      OK
+    </button>
+  </motion.div>
 );
 
-// Animation variants (re-used for consistency)
+// Animation variants (re-used for consistency and enhanced)
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
@@ -32,9 +41,21 @@ const fadeInUp = {
 const staggerContainer = {
   animate: {
     transition: {
-      staggerChildren: 0.1,
+      staggerChildren: 0.08, // Reduced stagger for faster appearance
     },
   },
+};
+
+const popIn = {
+  initial: { opacity: 0, scale: 0.9 },
+  animate: { opacity: 1, scale: 1 },
+  transition: { duration: 0.4, ease: "easeOut", type: "spring", stiffness: 200, damping: 15 },
+};
+
+const buttonPress = {
+  scale: 0.95,
+  y: 1,
+  transition: { type: "spring", stiffness: 300, damping: 10 } as Transition
 };
 
 interface HistoricalTip {
@@ -44,8 +65,8 @@ interface HistoricalTip {
 }
 
 const EnergyTips = () => {
-  const [currentQueryInput, setCurrentQueryInput] = useState<string>(''); // For the input query
-  const [latestGeneratedTip, setLatestGeneratedTip] = useState<string | null>(null); // To display the single latest generated tip
+  const [currentQueryInput, setCurrentQueryInput] = useState<string>('');
+  const [latestGeneratedTip, setLatestGeneratedTip] = useState<string | null>(null);
   const [isGeneratingTip, setIsGeneratingTip] = useState(false);
   const [historicalTips, setHistoricalTips] = useState<HistoricalTip[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
@@ -54,7 +75,7 @@ const EnergyTips = () => {
   // --- Function to fetch all historical energy tips ---
   const fetchHistoricalTips = async () => {
     setIsLoadingHistory(true);
-    setMessageBox(null); // Clear previous messages
+    setMessageBox(null);
     try {
       const response = await axiosInstance.get('/api/energy-tips/history');
       setHistoricalTips(response.data.tips || []);
@@ -68,28 +89,25 @@ const EnergyTips = () => {
 
   // --- Function to generate a new energy tip based on query ---
   const handleGenerateTipFromQuery = async () => {
-    if (currentQueryInput.trim() === '' && !latestGeneratedTip) { // Allow generating a tip without explicit query if no previous tip exists
-        setMessageBox({ message: "Please enter a query or click 'Generate Tip' for a general tip.", type: "error" });
-        return;
+    if (currentQueryInput.trim() === '' && !latestGeneratedTip) {
+      setMessageBox({ message: "Please enter a query or click 'Generate Tip' for a general tip.", type: "error" });
+      return;
     }
 
     setIsGeneratingTip(true);
-    setMessageBox(null); // Clear previous messages
-    setLatestGeneratedTip(null); // Clear previous latest tip to show loading
+    setMessageBox(null);
+    setLatestGeneratedTip(null);
 
     try {
-      // Send the query to the backend's generateTipsController
-      // The backend will interpret the query and generate a personalized, conversational tip
       const response = await axiosInstance.get('/api/energy-tips', {
-        params: { q: currentQueryInput.trim() }, // Pass the user's query
+        params: { q: currentQueryInput.trim() },
       });
 
       const generatedTipText = response.data.generatedTips?.[0]?.tipText || "I couldn't generate a specific tip for that. Please try rephrasing.";
       setLatestGeneratedTip(generatedTipText);
       setMessageBox({ message: "New energy tip generated!", type: "success" });
-      setCurrentQueryInput(''); // Clear input after successful generation
+      setCurrentQueryInput('');
 
-      // After generating and displaying a tip, refresh the historical tips list
       fetchHistoricalTips();
 
     } catch (err: any) {
@@ -105,10 +123,10 @@ const EnergyTips = () => {
   // Initial fetch of historical tips on component mount
   useEffect(() => {
     fetchHistoricalTips();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
   return (
-    <motion.div variants={fadeInUp} className="animate-fade-in p-4">
+    <motion.div initial="initial" animate="animate" variants={fadeInUp} className="p-4 sm:p-6 lg:p-8">
       {messageBox && (
         <MessageBox
           message={messageBox.message}
@@ -117,16 +135,16 @@ const EnergyTips = () => {
         />
       )}
 
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-text-primary mb-2">Energy Saving Tips</h1>
-        <p className="text-gray-600">Get personalized suggestions and discover practical ways to reduce your energy consumption.</p>
+      <div className="mb-8 text-center lg:text-left">
+        <h1 className="text-3xl sm:text-4xl font-bold text-text-primary mb-2">Energy Saving Tips</h1>
+        <p className="text-gray-600 text-lg">Get personalized suggestions and discover practical ways to reduce your energy consumption.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8"> {/* Adjusted grid for query + history */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Generate Tip by Query Section (left column) */}
-        <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-card p-6 flex flex-col h-[600px]">
+        <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-card p-6 flex flex-col h-[600px] border border-gray-100">
           <div className="flex items-center space-x-3 mb-6">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-md">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <h2 className="text-xl font-semibold text-text-primary">Get a Personalized Tip</h2>
@@ -135,100 +153,122 @@ const EnergyTips = () => {
           <p className="text-gray-600 mb-4">Enter your question or a topic to get a tailored energy-saving tip:</p>
 
           <div className="flex space-x-3 mb-6">
-            <input
+            <motion.input
               type="text"
               value={currentQueryInput}
               onChange={(e) => setCurrentQueryInput(e.target.value)}
               onKeyPress={(e) => { if (e.key === 'Enter' && !isGeneratingTip) handleGenerateTipFromQuery(); }}
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-primary focus:border-transparent transition-all"
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 ease-in-out"
               placeholder="e.g., How to save on AC? Tips for my old fridge..."
               disabled={isGeneratingTip}
+              whileFocus={{ scale: 1.01, boxShadow: "0 0 0 4px rgba(74, 222, 128, 0.2)" }}
             />
-            <button
+            <motion.button
               onClick={handleGenerateTipFromQuery}
-              disabled={isGeneratingTip} // Only disable if loading, allow empty input for general tip
-              className="bg-primary text-white p-3 rounded-xl hover:bg-green-600 transition-colors transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isGeneratingTip}
+              className="bg-primary text-white p-3 rounded-xl hover:bg-green-600 transition-colors transform disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={{ scale: 1.05 }}
+              whileTap={buttonPress}
             >
               {isGeneratingTip ? (
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                >
+                  <svg className="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                </motion.div>
               ) : (
                 <Send className="w-5 h-5" />
               )}
-            </button>
+            </motion.button>
           </div>
 
-          {isGeneratingTip && !latestGeneratedTip && ( // Show general loading for tip generation
-            <div className="flex flex-col items-center justify-center flex-1 text-gray-600">
+          {isGeneratingTip && !latestGeneratedTip && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center flex-1 text-gray-600"
+            >
               <Sparkles className="w-12 h-12 mb-4 text-yellow-500 animate-pulse" />
-              <p className="text-lg">Generating your personalized tip...</p>
-            </div>
+              <p className="text-lg animate-pulse">Generating your personalized tip...</p>
+            </motion.div>
           )}
 
           {latestGeneratedTip && !isGeneratingTip && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4 p-5 bg-green-50 border border-green-200 rounded-xl shadow-inner w-full max-w-full flex-1 overflow-y-auto"
+              variants={popIn}
+              initial="initial"
+              animate="animate"
+              className="mt-4 p-5 bg-green-50 border border-green-200 rounded-xl shadow-inner w-full max-w-full flex-1 overflow-y-auto custom-scrollbar"
             >
               <h3 className="text-lg font-semibold text-green-800 mb-2 flex items-center space-x-2">
                 <Lightbulb className="w-5 h-5 text-green-600" />
                 <span>Your Personalized Tip:</span>
               </h3>
-              <p className="text-gray-700 text-left">{latestGeneratedTip}</p>
+              <p className="text-gray-700 text-left leading-relaxed">{latestGeneratedTip}</p>
             </motion.div>
           )}
 
-        {!latestGeneratedTip && !isGeneratingTip && ( // Message if no tip yet and not loading
-            <div className="flex flex-col items-center justify-center flex-1 text-gray-500 py-10">
-                <Lightbulb className="w-10 h-10 mb-3" />
-                <p className="text-lg text-center">Your personalized tip will appear here.</p>
-                <p className="text-sm text-center">Ask a question or click the button to get started!</p>
-            </div>
-        )}
+          {!latestGeneratedTip && !isGeneratingTip && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center flex-1 text-gray-500 py-10"
+            >
+              <Lightbulb className="w-10 h-10 mb-3" />
+              <p className="text-lg text-center">Your personalized tip will appear here.</p>
+              <p className="text-sm text-center">Ask a question or click the button to get started!</p>
+            </motion.div>
+          )}
 
         </motion.div>
 
         {/* Historical Tips Section (right column) */}
-        <motion.div variants={fadeInUp} className="lg:col-span-1 bg-white rounded-2xl shadow-card p-6 flex flex-col h-[600px]">
+        <motion.div variants={fadeInUp} className="lg:col-span-1 bg-white rounded-2xl shadow-card p-6 flex flex-col h-[600px] border border-gray-100">
           <div className="flex items-center space-x-3 mb-6">
-            <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow-md">
               <Lightbulb className="w-5 h-5 text-white" />
             </div>
             <h2 className="text-xl font-semibold text-text-primary">All Generated Tips</h2>
-            <button
+            <motion.button
               onClick={fetchHistoricalTips}
               disabled={isLoadingHistory}
               className="ml-auto p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
               title="Refresh tips"
+              whileHover={{ rotate: 15 }}
+              whileTap={buttonPress}
             >
               <RefreshCw className="w-5 h-5" />
-            </button>
+            </motion.button>
           </div>
 
           {isLoadingHistory ? (
             <div className="flex flex-col items-center justify-center flex-1 text-gray-600">
-              <svg className="animate-spin h-8 w-8 text-blue-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <motion.svg
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="h-8 w-8 text-blue-500 mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
+              </motion.svg>
               <p>Loading historical tips...</p>
             </div>
           ) : historicalTips.length > 0 ? (
-            <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+            <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
               <motion.div variants={staggerContainer} initial="initial" animate="animate">
-                {historicalTips.map((tip) => (
+                {[...historicalTips].reverse().map((tip) => ( // Reverse to show latest first
                   <motion.div
                     key={tip.id}
                     variants={fadeInUp}
-                    className="bg-gray-50 rounded-xl p-4 shadow-sm"
+                    className="bg-gray-50 rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200"
                   >
                     <div className="flex items-start space-x-3">
                       <Sparkles className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-1" />
                       <div>
-                        <p className="text-sm text-gray-800 font-medium">{tip.tipText}</p>
+                        <p className="text-sm text-gray-800 font-medium leading-snug">{tip.tipText}</p>
                         <span className="text-xs text-gray-500 mt-1 block">
                           Generated: {new Date(tip.createdAt).toLocaleDateString()} at {new Date(tip.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
@@ -249,22 +289,25 @@ const EnergyTips = () => {
       </div>
 
       {/* Quick Stats - Updated to reflect actual generated tips count */}
-      <div className="mt-8 bg-gradient-to-r from-green-primary to-green-600 rounded-2xl p-6 text-white">
+      <motion.div
+        variants={fadeInUp}
+        className="mt-8 bg-gradient-to-r from-primary to-green-600 rounded-2xl p-6 text-white shadow-lg"
+      >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="text-center">
-            <div className="text-3xl font-bold mb-2">{historicalTips.length}+</div> {/* Reflects actual generated tips */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5 }} className="text-3xl sm:text-4xl font-bold mb-2">{historicalTips.length}+</motion.div>
             <div className="text-green-100">Energy Saving Tips Generated</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold mb-2">$500+</div>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.5 }} className="text-3xl sm:text-4xl font-bold mb-2">$500+</motion.div>
             <div className="text-green-100">Potential Annual Savings</div>
           </div>
           <div className="text-center">
-            <div className="text-3xl font-bold mb-2">30%</div>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.5 }} className="text-3xl sm:text-4xl font-bold mb-2">30%</motion.div>
             <div className="text-green-100">Average Energy Reduction</div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 };

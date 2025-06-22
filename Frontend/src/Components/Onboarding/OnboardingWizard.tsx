@@ -1,50 +1,53 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/Components/Onboarding/OnboardingWizard.tsx
 import { useState } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import PersonalInfoForm from "./PersonalInfoForm";
 import AddApplianceForm from "./AddApplianceForm";
 import AddReadingForm from "./AddReadingForm";
-import axiosInstance from "../../utils/axios"; // Ensure correct path
+import axiosInstance from "../../utils/axios"; // Adjust path if needed
+
+const fadeVariants: Variants = {
+  enter: {
+    opacity: 0,
+    scale: 0.98,
+  },
+  center: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 0.4,
+      ease: [0.25, 1, 0.5, 1],
+    },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.98,
+    transition: {
+      duration: 0.3,
+      ease: [0.42, 0, 0.58, 1],
+    },
+  },
+};
 
 const OnboardingWizard = () => {
   const navigate = useNavigate();
-  // Using 0-indexed steps: 0 = Personal Info, 1 = Add Appliance, 2 = Add Reading
+
   const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState<any>({}); // Collects data across steps
+  const [formData, setFormData] = useState<any>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  // Animation variants for step transitions
-  const stepVariants: Variants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 1000 : -1000,
-      opacity: 0,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-      transition: { duration: 0.5, ease: "easeOut" },
-    },
-    exit: (direction: number) => ({
-      x: direction < 0 ? 1000 : -1000,
-      opacity: 0,
-      transition: { duration: 0.3, ease: "easeIn" },
-    }),
-  };
-
-  const [direction, setDirection] = useState(0); // 0: no movement, 1: next, -1: back
+  const [, setDirection] = useState(0);
 
   const handleNextStep = (data: any) => {
-    setDirection(1); // Moving forward
-    setFormData((prevData: any) => ({ ...prevData, ...data }));
-    setCurrentStep((prevStep) => prevStep + 1);
+    setDirection(1);
+    setFormData((prev: any) => ({ ...prev, ...data }));
+    setCurrentStep((prev) => prev + 1);
   };
 
   const handlePreviousStep = () => {
-    setDirection(-1); // Moving backward
-    setCurrentStep((prevStep) => prevStep - 1);
+    setDirection(-1);
+    setCurrentStep((prev) => prev - 1);
   };
 
   const handleOnboardingFinalize = async (readingData: any) => {
@@ -52,18 +55,14 @@ const OnboardingWizard = () => {
     setLoading(true);
 
     try {
-      // Step 1: Update User and UserProfile with data from PersonalInfoForm
-      // The backend `updateUserProfile` controller expects these fields at the top level
       const personalInfoPayload = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phoneNumber: formData.phoneNumber, // Assuming phoneNumber might be collected too
+        phoneNumber: formData.phoneNumber,
         householdSize: parseInt(formData.householdSize),
         address: formData.address,
         city: formData.city,
         state: formData.state,
         zipCode: formData.zipCode,
-        electricityRatePerKWh: parseFloat(formData.electricityRate), // Matches backend field name
+        electricityRatePerKWh: parseFloat(formData.electricityRate),
         targetReduction: formData.targetReduction
           ? parseFloat(formData.targetReduction)
           : undefined,
@@ -72,22 +71,15 @@ const OnboardingWizard = () => {
       };
 
       await axiosInstance.put("/api/profile", personalInfoPayload);
-      console.log("User profile and onboarding status updated successfully.");
-
-      // Step 2: Add Appliance (from AddApplianceForm)
       if (formData.appliance) {
         await axiosInstance.post("/api/appliances", formData.appliance);
-        console.log("Appliance added successfully.");
       }
-
-      // Step 3: Add Initial Reading (from AddReadingForm)
       if (readingData.reading) {
-        // readingData contains the 'reading' object
         await axiosInstance.post("/api/meter-readings", readingData.reading);
-        console.log("Initial meter reading added successfully.");
       }
-
-      navigate("/dashboard"); 
+      navigate("/dashboard");
+      window.location.reload(); 
+      
     } catch (err: any) {
       console.error("Onboarding finalization failed:", err);
       setError(
@@ -99,7 +91,6 @@ const OnboardingWizard = () => {
     }
   };
 
-  // Render current step component
   const renderStep = () => {
     switch (currentStep) {
       case 0:
@@ -130,7 +121,7 @@ const OnboardingWizard = () => {
           />
         );
       default:
-        return <p>Unknown step.</p>;
+        return <p>Unknown step</p>;
     }
   };
 
@@ -153,15 +144,14 @@ const OnboardingWizard = () => {
           )}
         </div>
 
-        <AnimatePresence mode="wait" initial={false} custom={direction}>
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
-            key={currentStep} // Important for AnimatePresence to detect change and animate
-            variants={stepVariants}
+            key={currentStep}
+            variants={fadeVariants}
             initial="enter"
             animate="center"
             exit="exit"
-            custom={direction}
-            className="w-full" // Ensure the child content takes full width
+            className="w-full"
           >
             {renderStep()}
           </motion.div>

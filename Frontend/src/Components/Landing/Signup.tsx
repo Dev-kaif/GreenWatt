@@ -10,7 +10,6 @@ import {
   User,
   ArrowRight,
   Home,
-  Users,
 } from "lucide-react";
 import axios from "axios";
 import { BACKEND_URL } from "../../utils/Config";
@@ -43,7 +42,6 @@ export default function SignupPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    householdSize: 1,
     agreeToTerms: false,
   });
 
@@ -125,7 +123,6 @@ export default function SignupPage() {
           password: formData.password,
           firstName: formData.firstName,
           lastName: formData.lastName,
-          householdSize: formData.householdSize, // Required field
         },
         { withCredentials: true }
       );
@@ -481,30 +478,6 @@ export default function SignupPage() {
                       Passwords don't match
                     </motion.p>
                   )}
-              </motion.div>
-
-              {/* Household Size Field */}
-              <motion.div variants={fadeInUp} className="space-y-2">
-                <label
-                  htmlFor="householdSize"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Household Size
-                </label>
-                <div className="relative">
-                  <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    type="number"
-                    id="householdSize"
-                    name="householdSize"
-                    value={formData.householdSize}
-                    onChange={handleInputChange}
-                    required
-                    min="1" // Ensure at least 1 person
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
-                    placeholder="e.g., 4"
-                  />
-                </div>
               </motion.div>
 
               {/* Terms and Conditions Checkbox */}

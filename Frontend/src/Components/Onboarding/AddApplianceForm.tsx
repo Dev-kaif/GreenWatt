@@ -19,82 +19,66 @@ interface AddApplianceFormProps {
   initialData?: any;
 }
 
+// Fade-in / fade-out variants
+const fadeContainer: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.2 },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.3, ease: "easeInOut" },
+  },
+};
+
+const fadeItem: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: "easeOut" },
+  },
+};
+
 const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
   onSubmit,
   onBack,
   initialData,
 }) => {
-  const [applianceType, setApplianceType] = useState(
-    initialData?.appliance?.applianceType || ""
-  );
-  const [modelName, setModelName] = useState(
-    initialData?.appliance?.modelName || ""
-  );
-  const [ageYears, setAgeYears] = useState(
-    initialData?.appliance?.ageYears || ""
-  );
-  const [purchaseDate, setPurchaseDate] = useState(
-    initialData?.appliance?.purchaseDate || ""
-  );
-  const [energyStarRating, setEnergyStarRating] = useState(
-    initialData?.appliance?.energyStarRating || ""
-  );
-  const [powerConsumption, setPowerConsumption] = useState(
-    initialData?.appliance?.powerConsumption || ""
-  );
-  const [energyEfficiencyRating, setEnergyEfficiencyRating] = useState(
-    initialData?.appliance?.energyEfficiencyRating || ""
-  );
-  const [capacity, setCapacity] = useState(
-    initialData?.appliance?.capacity || ""
-  );
-  const [avgDailyUsageHours, setAvgDailyUsageHours] = useState(
-    initialData?.appliance?.avgDailyUsageHours || ""
-  );
+  const [applianceType, setApplianceType] = useState(initialData?.appliance?.applianceType || "");
+  const [modelName, setModelName] = useState(initialData?.appliance?.modelName || "");
+  const [ageYears, setAgeYears] = useState(initialData?.appliance?.ageYears || "");
+  const [purchaseDate, setPurchaseDate] = useState(initialData?.appliance?.purchaseDate || "");
+  const [energyStarRating, setEnergyStarRating] = useState(initialData?.appliance?.energyStarRating || "");
+  const [powerConsumption, setPowerConsumption] = useState(initialData?.appliance?.powerConsumption || "");
+  const [energyEfficiencyRating, setEnergyEfficiencyRating] = useState(initialData?.appliance?.energyEfficiencyRating || "");
+  const [capacity, setCapacity] = useState(initialData?.appliance?.capacity || "");
+  const [avgDailyUsageHours, setAvgDailyUsageHours] = useState(initialData?.appliance?.avgDailyUsageHours || "");
   const [formError, setFormError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
-    // Basic validation for at least required fields as per screenshot
-    if (
-      !applianceType ||
-      !powerConsumption ||
-      parseFloat(powerConsumption) <= 0
-    ) {
-      setFormError(
-        "Please enter Appliance Type and a valid Power Consumption."
-      );
+    if (!applianceType || !powerConsumption || parseFloat(powerConsumption) <= 0) {
+      setFormError("Please enter Appliance Type and a valid Power Consumption.");
       return;
     }
 
     const applianceData = {
-      type: applianceType, // This needs to match 'type' in your Prisma Appliance model
+      type: applianceType,
       modelName: modelName || undefined,
       ageYears: ageYears ? parseInt(ageYears) : undefined,
-      purchaseDate: purchaseDate
-        ? new Date(purchaseDate).toISOString()
-        : undefined, // Convert to ISO string
+      purchaseDate: purchaseDate ? new Date(purchaseDate).toISOString() : undefined,
       energyStarRating: energyStarRating || undefined,
-      powerConsumptionWatts: parseFloat(powerConsumption), // Matches backend field name
+      powerConsumptionWatts: parseFloat(powerConsumption),
       energyEfficiencyRating: energyEfficiencyRating || undefined,
       capacity: capacity || undefined,
-      averageDailyUsageHours: avgDailyUsageHours
-        ? parseFloat(avgDailyUsageHours)
-        : undefined, // Matches backend field name
+      averageDailyUsageHours: avgDailyUsageHours ? parseFloat(avgDailyUsageHours) : undefined,
     };
 
-    onSubmit({ appliance: applianceData }); // Wrap appliance data in an 'appliance' key
-  };
-
-  const itemVariants: Variants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.5, ease: "easeOut" },
-    },
+    onSubmit({ appliance: applianceData });
   };
 
   return (
@@ -103,30 +87,16 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
       className="space-y-6 p-4"
       initial="hidden"
       animate="visible"
-      exit="hidden"
-      variants={{
-        hidden: { opacity: 0, x: -1000 },
-        visible: {
-          opacity: 1,
-          x: 0,
-          transition: { staggerChildren: 0.07, delayChildren: 0.2 },
-        },
-      }}
-      custom={1} // Custom prop for exit direction from parent AnimatePresence
+      exit="exit"
+      variants={fadeContainer}
     >
-      <motion.p
-        variants={itemVariants}
-        className="text-center text-gray-600 mb-6"
-      >
+      <motion.p variants={fadeItem} className="text-center text-gray-600 mb-6">
         Let's add your first appliance. You can add more later.
       </motion.p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <motion.div variants={itemVariants}>
-          <label
-            htmlFor="applianceType"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+        <motion.div variants={fadeItem}>
+          <label htmlFor="applianceType" className="block text-sm font-medium text-gray-700 mb-1">
             <Home className="inline-block mr-1 w-4 h-4 text-gray-500" />
             Appliance Type <span className="text-red-500">*</span>
           </label>
@@ -148,11 +118,9 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
             <option value="Other">Other</option>
           </select>
         </motion.div>
-        <motion.div variants={itemVariants}>
-          <label
-            htmlFor="modelName"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+
+        <motion.div variants={fadeItem}>
+          <label htmlFor="modelName" className="block text-sm font-medium text-gray-700 mb-1">
             <Tag className="inline-block mr-1 w-4 h-4 text-gray-500" />
             Model Name
           </label>
@@ -168,11 +136,8 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <motion.div variants={itemVariants}>
-          <label
-            htmlFor="ageYears"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+        <motion.div variants={fadeItem}>
+          <label htmlFor="ageYears" className="block text-sm font-medium text-gray-700 mb-1">
             <Calendar className="inline-block mr-1 w-4 h-4 text-gray-500" />
             Age (Years)
           </label>
@@ -186,11 +151,9 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
             className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
           />
         </motion.div>
-        <motion.div variants={itemVariants}>
-          <label
-            htmlFor="purchaseDate"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+
+        <motion.div variants={fadeItem}>
+          <label htmlFor="purchaseDate" className="block text-sm font-medium text-gray-700 mb-1">
             <Calendar className="inline-block mr-1 w-4 h-4 text-gray-500" />
             Purchase Date
           </label>
@@ -205,11 +168,8 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <motion.div variants={itemVariants}>
-          <label
-            htmlFor="energyStarRating"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+        <motion.div variants={fadeItem}>
+          <label htmlFor="energyStarRating" className="block text-sm font-medium text-gray-700 mb-1">
             <Star className="inline-block mr-1 w-4 h-4 text-gray-500" />
             Energy Star Rating
           </label>
@@ -222,11 +182,9 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
             className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
           />
         </motion.div>
-        <motion.div variants={itemVariants}>
-          <label
-            htmlFor="powerConsumption"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+
+        <motion.div variants={fadeItem}>
+          <label htmlFor="powerConsumption" className="block text-sm font-medium text-gray-700 mb-1">
             <Power className="inline-block mr-1 w-4 h-4 text-gray-500" />
             Power Consumption (Watts) <span className="text-red-500">*</span>
           </label>
@@ -244,11 +202,8 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <motion.div variants={itemVariants}>
-          <label
-            htmlFor="energyEfficiencyRating"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+        <motion.div variants={fadeItem}>
+          <label htmlFor="energyEfficiencyRating" className="block text-sm font-medium text-gray-700 mb-1">
             <BatteryCharging className="inline-block mr-1 w-4 h-4 text-gray-500" />
             Energy Efficiency Rating
           </label>
@@ -261,11 +216,9 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
             className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
           />
         </motion.div>
-        <motion.div variants={itemVariants}>
-          <label
-            htmlFor="capacity"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+
+        <motion.div variants={fadeItem}>
+          <label htmlFor="capacity" className="block text-sm font-medium text-gray-700 mb-1">
             <Gauge className="inline-block mr-1 w-4 h-4 text-gray-500" />
             Capacity
           </label>
@@ -280,11 +233,8 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
         </motion.div>
       </div>
 
-      <motion.div variants={itemVariants}>
-        <label
-          htmlFor="avgDailyUsageHours"
-          className="block text-sm font-medium text-gray-700 mb-1"
-        >
+      <motion.div variants={fadeItem}>
+        <label htmlFor="avgDailyUsageHours" className="block text-sm font-medium text-gray-700 mb-1">
           <Clock className="inline-block mr-1 w-4 h-4 text-gray-500" />
           Avg. Daily Usage (Hours)
         </label>
@@ -303,16 +253,15 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
 
       {formError && (
         <motion.div
+          variants={fadeItem}
           className="p-3 bg-red-100 text-red-700 rounded-lg text-sm flex items-center"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
         >
           <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
             <path
               fillRule="evenodd"
               d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
               clipRule="evenodd"
-            ></path>
+            />
           </svg>
           {formError}
         </motion.div>
@@ -322,7 +271,7 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
         <motion.button
           type="button"
           onClick={onBack}
-          variants={itemVariants}
+          variants={fadeItem}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           className="flex-1 bg-gray-300 text-gray-800 py-3 px-4 rounded-lg shadow-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 transition-colors duration-300"
@@ -331,13 +280,12 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
         </motion.button>
         <motion.button
           type="submit"
-          variants={itemVariants}
+          variants={fadeItem}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           className="flex-1 bg-green-600 text-white py-3 px-4 rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-300"
         >
-          Next: Add a Reading{" "}
-          <PlusCircle className="inline-block ml-2 w-5 h-5" />
+          Next: Add a Reading <PlusCircle className="inline-block ml-2 w-5 h-5" />
         </motion.button>
       </div>
     </motion.form>

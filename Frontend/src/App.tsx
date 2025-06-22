@@ -6,6 +6,7 @@ import SignupPage from "./Components/Landing/Signup";
 import ProtectedRoute from "./Components/Landing/Protected"; // This is the updated component
 import Index from "./Components/Dashboard/DashboardPage"; // Your Dashboard component
 import OnboardingWizard from "./Components/Onboarding/OnboardingWizard"; // Your Onboarding Wizard
+import ConfirmPage from "./Components/Landing/Confirm";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<GreenWattLanding />} />
+        <Route path="/confirm" element={<ConfirmPage/>} />
         <Route path="/auth/login" element={<LoginPage />} />
         <Route path="/auth/signup" element={<SignupPage />} />
 
