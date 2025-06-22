@@ -189,12 +189,9 @@ const findSimilarUsersContext = async (userId: string, limit: number = 3) => {
     const similarDocs = await vectorStore.similaritySearch(
       currentUserProfileTextForEmbedding, 
       limit + 1,
-      // { userId_ne: userId }
+      { userId_ne: userId }
     );
 
-    console.log("\n\n\n\n\ currentUserProfileTextForEmbedding :",currentUserProfileTextForEmbedding,"\n\n\n\n\n\n");
-    console.log("\n\n\n\n\ simialr docx :",similarDocs,"\n\n\n\n\n\n");
-    
 
     let context = "";
     const filteredDocs = similarDocs.filter(
@@ -240,7 +237,6 @@ export const generatePersonalizedTips = async (
 
     const similarUsersContext = await findSimilarUsersContext(userId, 3);
 
-    // console.log("\n\n\n\n\n", similarUsersContext, "\n\n\n\n\n\n");
 
     const promptTemplate = ChatPromptTemplate.fromMessages([
       [

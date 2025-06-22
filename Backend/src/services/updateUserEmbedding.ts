@@ -69,7 +69,7 @@ export const updateUserEmbedding = async (userId: string) => {
       throw new Error(`Supabase upsert error: ${error.message}`);
     }
 
-    console.log(`Embedding for user ${userId} upserted successfully. Data:`, data);
+    // console.log(`Embedding for user ${userId} upserted successfully. Data:`, data);
 
   } catch (error: any) {
     console.error(`Error generating or updating embedding for user ${userId}:`, error);

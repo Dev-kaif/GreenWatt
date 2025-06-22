@@ -380,19 +380,18 @@ const DataEntry = () => {
         source: "manual",
       };
 
-      let response;
       if (isEditing && formData.id) {
-        response = await axiosInstance.put(
+        await axiosInstance.put(
           `/api/meter-readings/${formData.id}`,
           dataToSend
         );
         setSuccessMessage("Energy data updated successfully!");
       } else {
         dataToSend.readingDate = formData.date;
-        response = await axiosInstance.post("/api/meter-readings", dataToSend);
+        await axiosInstance.post("/api/meter-readings", dataToSend);
         setSuccessMessage("Energy data saved successfully!");
       }
-      console.log("Meter reading operation successful:", response.data);
+      // console.log("Meter reading operation successful:", response.data);
 
       fetchRecentEntries();
       handleCancelEdit();
@@ -454,7 +453,7 @@ const DataEntry = () => {
         }
       );
 
-      console.log("CSV Upload successful:", response.data);
+      // console.log("CSV Upload successful:", response.data);
       setSuccessMessage(
         response.data.message || "CSV data uploaded successfully!"
       );
@@ -523,10 +522,10 @@ const DataEntry = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await axiosInstance.delete(
+      await axiosInstance.delete(
         `/api/meter-readings/${itemToDeleteId}`
       );
-      console.log("Meter reading deleted:", response.data);
+      // console.log("Meter reading deleted:", response.data);
       setSuccessMessage("Entry deleted successfully!");
       fetchRecentEntries();
     } catch (err: any) {
@@ -580,7 +579,7 @@ const DataEntry = () => {
       const response = await axiosInstance.delete("/api/meter-readings/bulk", {
         data: { ids: selectedEntryIds },
       });
-      console.log("Bulk delete successful:", response.data);
+      // console.log("Bulk delete successful:", response.data);
       setSuccessMessage(
         `${
           response.data.deletedCount || selectedEntryIds.length

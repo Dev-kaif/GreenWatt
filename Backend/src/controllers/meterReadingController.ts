@@ -537,7 +537,6 @@ export const getMonthlyConsumptionSummary = async (
 ) => {
   const userId = req.user?.id;
 
-  // console.log("\n\n\nhell i am here \n\n\n");
 
   if (!userId) {
     res.status(401).json({ message: "User not authenticated." });

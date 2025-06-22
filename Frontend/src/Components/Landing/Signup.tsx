@@ -127,7 +127,7 @@ export default function SignupPage() {
         { withCredentials: true }
       );
 
-      console.log("Signup successful:", response.data);
+      // console.log("Signup successful:", response.data);
       setSuccessMessage(
         response.data.message ||
           "Signup successful! Please check your email for verification if required."

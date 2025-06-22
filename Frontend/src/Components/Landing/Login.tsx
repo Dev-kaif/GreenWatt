@@ -49,7 +49,7 @@ export default function LoginPage() {
         }
       );
 
-      console.log("Login successful:", response.data);
+      // console.log("Login successful:", response.data);
       const { access_token } = response.data.session;
 
       if (access_token) {

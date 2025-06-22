@@ -215,7 +215,7 @@ const Profile = () => {
       };
 
       const response = await axiosInstance.put("/api/profile", payload);
-      console.log("Profile updated:", response.data);
+      // console.log("Profile updated:", response.data);
       setSuccessMessage("Profile updated successfully!");
       setProfileData(response.data.user); // Update main profileData state with fresh data
       setIsEditing(false); // Exit edit mode after successful save

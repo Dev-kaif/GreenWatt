@@ -204,9 +204,8 @@ const Appliances = () => {
         purchaseDate: formData.purchaseDate || undefined,
       };
 
-      let response;
       if (isEditing && currentApplianceId) {
-        response = await axiosInstance.put(`/api/appliances/${currentApplianceId}`, payload);
+         await axiosInstance.put(`/api/appliances/${currentApplianceId}`, payload);
         setSuccessMessage("Appliance updated successfully!");
       } else {
         // Basic validation for type, as it's required by backend
@@ -215,12 +214,11 @@ const Appliances = () => {
           setIsSubmitting(false);
           return;
         }
-        response = await axiosInstance.post('/api/appliances', payload);
+        await axiosInstance.post('/api/appliances', payload);
         setSuccessMessage("Appliance added successfully!");
       }
-      console.log('Appliance operation successful:', response.data);
 
-      await fetchAppliances(); // Refresh the list
+      await fetchAppliances();
       handleCloseApplianceFormModal(); // Close modal and reset form
 
     } catch (err: any) {
@@ -269,8 +267,7 @@ const Appliances = () => {
     setSuccessMessage(null);
 
     try {
-      const response = await axiosInstance.delete(`/api/appliances/${itemToDeleteId}`);
-      console.log('Appliance deleted:', response.data);
+      await axiosInstance.delete(`/api/appliances/${itemToDeleteId}`);
       setSuccessMessage("Appliance deleted successfully!");
       await fetchAppliances(); // Refresh the list
     } catch (err: any) {
