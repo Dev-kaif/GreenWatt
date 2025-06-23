@@ -57,7 +57,7 @@ GreenWatt is a web application designed to help households monitor, understand, 
 
   * **dotenv:** For loading environment variables from a `.env` file.
 
-  * **OpenAI API (or similar LLM API):** For generating personalized energy tips. (Implicitly used by the `updateUserEmbedding` service if it leverages LLMs).
+  * **Gemini (or similar LLM API):** For generating personalized energy tips. (Implicitly used by the `updateUserEmbedding` service if it leverages LLMs).
 
 ## 🛠️ Setup Instructions
 
@@ -81,48 +81,78 @@ cd greenwatt-project # Replace with your project's root directory name
 
 ```
 
-### 2\. Backend Setup
 
-Navigate to your backend directory (e.g., `backend/` or `server/`).
+---
 
-```
+## 🛠️ Backend Setup
+
+Navigate to your backend directory (e.g., `backend/` or `server/`):
+
+```bash
 cd backend # or server
 npm install # or yarn install
-
 ```
 
-#### Database Configuration
+### 📦 Environment Configuration
 
-Create a `.env` file in your backend directory and add your PostgreSQL database URL.
+Create a `.env` file in your backend directory and add your **NeonDB PostgreSQL** connection string:
 
-```
+```env
 # .env in backend directory
-DATABASE_URL="postgresql://user:password@host:port/database"
-SHADOW_DATABASE_URL="postgresql://user:password@host:port/shadow_database" # For Prisma Migrate
-JWT_SECRET="your_jwt_secret_key" # Replace with a strong, random string
-# GEMINI_API_KEY="your_GEMINI_API_KEY" # If your embedding service uses OpenAI
-
+DATABASE_URL="postgresql://username:password@your-neon-db.neon.tech/db_name?sslmode=require"
+SHADOW_DATABASE_URL="postgresql://username:password@your-neon-db.neon.tech/shadow_db?sslmode=require" # For Prisma Migrate
+JWT_SECRET="your_jwt_secret"
+GEMINI_API_KEY="your_gemini_api_key" # Optional if you use Gemini/OpenAI for embeddings
 ```
 
-#### Prisma Database Migration
+### 🔄 Run Prisma Migrations
 
-Apply the Prisma migrations to set up your database schema, including the `onboardingComplete` field in `UserProfile`.
+Run this to apply your schema and generate the Prisma client:
 
-```
-npx prisma migrate dev --name init_greenwatt_db # If this is the first migration
-# OR if you've already had migrations and just added onboardingComplete:
-npx prisma migrate dev --name add_onboarding_complete_to_user_profile
-
+```bash
+npx prisma migrate dev --name init_greenwatt_db
 ```
 
-#### Start Backend Server
+> If you add new fields like `onboardingComplete`, run:
 
+```bash
+npx prisma migrate dev --name add_onboarding_complete
 ```
-npm start # or yarn start
 
+---
+
+### 🧠 Enabling Vector Embeddings in NeonDB
+
+Prisma doesn't natively support PostgreSQL `vector` types, so you must manually add the `embedding` column.
+
+#### 1. Enable the `pgvector` Extension
+
+Log into your Neon dashboard → SQL Editor, and run:
+
+```sql
+create extension if not exists vector;
 ```
 
-The backend server should start on `http://localhost:5000` (or your configured port).
+#### 2. Add the `embedding` Column to `user_embeddings`
+
+```sql
+alter table public.UserEmbedding
+add column if not exists embedding vector(1536);
+```
+
+> ⚠️ Prisma will ignore this column. Make sure any embeddings you insert use raw SQL or `prisma.$executeRaw`.
+
+---
+
+### ▶️ Start Backend Server
+
+```bash
+npm run dev
+```
+
+The server should now be live at `http://localhost:3000`.
+
+---
 
 ### 3\. Frontend Setup
 
