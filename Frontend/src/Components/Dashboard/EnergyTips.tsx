@@ -257,13 +257,13 @@ const EnergyTips = () => {
               <p>Loading historical tips...</p>
             </div>
           ) : historicalTips.length > 0 ? (
-            <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
               <motion.div variants={staggerContainer} initial="initial" animate="animate">
-                {[...historicalTips].reverse().map((tip) => ( // Reverse to show latest first
+                {[...historicalTips].reverse().map((tip) => ( 
                   <motion.div
                     key={tip.id}
                     variants={fadeInUp}
-                    className="bg-gray-50 rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200"
+                    className="bg-gray-50 rounded-xl p-4 mb-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200"
                   >
                     <div className="flex items-start space-x-3">
                       <Sparkles className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-1" />

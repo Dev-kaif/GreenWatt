@@ -133,7 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               const isActive = activeSection === item.id;
 
               return (
-                <li key={item.id} className="relative **h-[56px]**">
+                <li key={item.id} className="relative h-[56px]">
                   {" "}
                   {/* Added fixed height */}
                   <button
@@ -181,18 +181,24 @@ const Sidebar: React.FC<SidebarProps> = ({
           </ul>
         </nav>
 
-        <div className="p-4 border-t border-gray-100">
+        <div className="p-4 border-t border-gray-100 overflow-hidden">
           <button
             onClick={handleLogout}
             className={cn(
-              "w-full flex items-center space-x-3 px-4 py-3 rounded-full bg-red-500 text-white hover:bg-red-600 transition-all duration-200 hover-scale **h-[56px]**", // Added fixed height
+              "relative w-full flex items-center space-x-3 px-4 py-3 rounded-full text-white hover:bg-red-600 transition-all duration-200 hover-scale h-[56px]", // Added fixed height and relative
               desktopSidebarCollapsed
                 ? "justify-center space-x-0 flex-col items-center gap-1"
                 : ""
             )}
             title="Logout"
           >
-            <LogOut className="w-5 h-5" />
+            <motion.div // Animated background
+              layout
+              className="absolute inset-0 bg-red-500 rounded-full -z-1"
+              animate={{ width: desktopSidebarCollapsed ? 'auto' : '100%' }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            />
+            <LogOut className="w-5 h-5 relative z-10" />
             <AnimatePresence mode="wait">
               {!desktopSidebarCollapsed && (
                 <motion.span
@@ -201,7 +207,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: 0.15 }}
-                  className="font-medium whitespace-pre text-sm"
+                  className="font-medium whitespace-pre text-sm relative z-10"
                 >
                   Logout
                 </motion.span>
@@ -235,7 +241,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   const isActive = activeSection === item.id;
 
                   return (
-                    <li key={item.id} className="relative **h-[56px]**">
+                    <li key={item.id} className="relative h-[56px]">
                       {" "}
                       {/* Added fixed height */}
                       <button
@@ -274,7 +280,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="p-4 border-t border-gray-100">
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all duration-200 hover-scale **h-[56px]**" // Added fixed height
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all duration-200 hover-scale h-[56px]" // Added fixed height
                 title="Logout"
               >
                 <LogOut className="w-5 h-5" />
