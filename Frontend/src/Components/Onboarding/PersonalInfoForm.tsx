@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { motion, type Variants } from "framer-motion";
 import { MapPin, DollarSign, Target, Home, Sparkles } from "lucide-react";
 
-// Animation Variants
+// Animation Variants (keep as is)
 const fadeInUpStaggered: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: (i: number) => ({
@@ -49,6 +49,18 @@ interface PersonalInfoFormProps {
   initialData?: any;
 }
 
+// Hardcoded list of Indian States
+const indianStates = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
+  "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan",
+  "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
+  "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir",
+  "Lakshadweep", "Puducherry", "Ladakh"
+].sort(); // Sort alphabetically for better UX
+
 const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   onSubmit,
   initialData,
@@ -63,27 +75,41 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
   const [ecoGoals, setEcoGoals] = useState(initialData?.ecoGoals || "");
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Hardcode country to "India" as it's for Indian context
+  const [country] = useState("India");
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
+    // Basic required fields validation
     if (!address || !city || !state || !zipCode || !householdSize || !electricityRate) {
       setFormError("Please fill in all required personal and address fields.");
       return;
     }
 
+    // Electricity Rate validation
     if (parseFloat(electricityRate) <= 0) {
       setFormError("Electricity rate must be a positive number.");
       return;
     }
 
+    // Household Size validation
     if (parseInt(householdSize) <= 0) {
       setFormError("Household size must be at least 1.");
       return;
-    }
+      }
 
+    // Target Reduction validation
     if (targetReduction && (parseFloat(targetReduction) < 0 || parseFloat(targetReduction) > 100)) {
       setFormError("Target reduction must be between 0 and 100%.");
+      return;
+    }
+
+    // Zip Code validation: Must be exactly 6 digits and a number
+    const zipCodePattern = /^\d{6}$/;
+    if (!zipCodePattern.test(zipCode)) {
+      setFormError("Zip Code must be a 6-digit number.");
       return;
     }
 
@@ -96,8 +122,30 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
       electricityRate,
       targetReduction,
       ecoGoals,
+      country,
     });
   };
+
+  // Function to handle city input and ensure first letter is uppercase
+  const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value.length === 0) {
+      setCity("");
+      return;
+    }
+    // Convert first letter to uppercase, and rest to lowercase
+    const formattedCity = value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+    setCity(formattedCity);
+  };
+
+  // Function to restrict input to only numbers for zip code
+  const handleZipCodeKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Allow digits (0-9), backspace, delete, arrow keys, tab
+    if (!/[0-9]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Tab') {
+      e.preventDefault(); // Prevent non-numeric characters from being typed
+    }
+  };
+
 
   return (
     <motion.form
@@ -135,38 +183,63 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             type="text"
             id="city"
             value={city}
-            onChange={(e) => setCity(e.target.value)}
+            onChange={handleCityChange}
             placeholder="Mumbai"
             required
             className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
           />
         </motion.div>
 
+        {/* State Dropdown */}
         <motion.div variants={fadeInUpStaggered} custom={2}>
           <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
             State
           </label>
-          <input
-            type="text"
+          <select
             id="state"
             value={state}
             onChange={(e) => setState(e.target.value)}
-            placeholder="Maharashtra"
             required
             className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
-          />
+          >
+            <option value="">Select a State</option> {/* Default empty option */}
+            {indianStates.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
         </motion.div>
       </div>
+
+      {/* Hardcoded Country (Optional: Can also be a disabled input or just included in the onSubmit data) */}
+      <motion.div variants={fadeInUpStaggered} custom={2.5}>
+        <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
+          Country
+        </label>
+        <input
+          type="text"
+          id="country"
+          value={country}
+          readOnly // Make it read-only
+          className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm bg-gray-100 text-gray-600 cursor-not-allowed text-sm"
+        />
+      </motion.div>
+
 
       <motion.div variants={fadeInUpStaggered} custom={3}>
         <label htmlFor="zipCode" className="block text-sm font-medium text-gray-700 mb-1">
           Zip Code
         </label>
         <input
-          type="text"
+          type="text" // Keep as type="text" for full control and consistent behavior
           id="zipCode"
           value={zipCode}
           onChange={(e) => setZipCode(e.target.value)}
+          onKeyPress={handleZipCodeKeyPress} // Add this handler
+          inputMode="numeric" // Hint for mobile keyboards
+          pattern="\d{6}" // Client-side visual hint and basic validation
+          maxLength={6} // Restrict length
           placeholder="400001"
           required
           className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"

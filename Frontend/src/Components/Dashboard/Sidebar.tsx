@@ -151,7 +151,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     {isActive && (
                       <motion.div
                         layoutId="activeLinkHighlight"
-                        className="absolute inset-0 rounded-xl bg-primary z-[-1]"
+                        className="absolute inset-0 rounded-full bg-primary -z-1"
                         transition={{
                           type: "spring",
                           bounce: 0.2,
@@ -185,7 +185,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <button
             onClick={handleLogout}
             className={cn(
-              "w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-red-500 text-white hover:bg-red-600 transition-all duration-200 hover-scale **h-[56px]**", // Added fixed height
+              "w-full flex items-center space-x-3 px-4 py-3 rounded-full bg-red-500 text-white hover:bg-red-600 transition-all duration-200 hover-scale **h-[56px]**", // Added fixed height
               desktopSidebarCollapsed
                 ? "justify-center space-x-0 flex-col items-center gap-1"
                 : ""

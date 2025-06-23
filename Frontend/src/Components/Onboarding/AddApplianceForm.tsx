@@ -41,6 +41,12 @@ const fadeItem: Variants = {
   },
 };
 
+// Hardcoded options for dropdowns
+const energyStarRatings = ["1-Star", "2-Star", "3-Star", "4-Star", "5-Star"];
+const energyEfficiencyGrades = ["A+++", "A++", "A+", "A", "B", "C", "D"]; // Interpreted "grades" here
+const capacityUnits = ["Liters (L)", "Kilograms (kg)", "BTU", "Tons", "Cubic Feet (cu ft)", "Gallons (gal)", "Other"];
+
+
 const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
   onSubmit,
   onBack,
@@ -54,6 +60,7 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
   const [powerConsumption, setPowerConsumption] = useState(initialData?.appliance?.powerConsumption || "");
   const [energyEfficiencyRating, setEnergyEfficiencyRating] = useState(initialData?.appliance?.energyEfficiencyRating || "");
   const [capacity, setCapacity] = useState(initialData?.appliance?.capacity || "");
+  const [capacityUnit, setCapacityUnit] = useState(initialData?.appliance?.capacityUnit || ""); // New state for capacity unit
   const [avgDailyUsageHours, setAvgDailyUsageHours] = useState(initialData?.appliance?.avgDailyUsageHours || "");
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -66,6 +73,10 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
       return;
     }
 
+    // Combine capacity and unit for storage if both exist
+    const combinedCapacity = capacity && capacityUnit ? `${capacity} ${capacityUnit}` : capacity || undefined;
+
+
     const applianceData = {
       type: applianceType,
       modelName: modelName || undefined,
@@ -74,7 +85,7 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
       energyStarRating: energyStarRating || undefined,
       powerConsumptionWatts: parseFloat(powerConsumption),
       energyEfficiencyRating: energyEfficiencyRating || undefined,
-      capacity: capacity || undefined,
+      capacity: combinedCapacity, // Use combined capacity
       averageDailyUsageHours: avgDailyUsageHours ? parseFloat(avgDailyUsageHours) : undefined,
     };
 
@@ -168,19 +179,25 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Energy Star Rating Dropdown */}
         <motion.div variants={fadeItem}>
           <label htmlFor="energyStarRating" className="block text-sm font-medium text-gray-700 mb-1">
             <Star className="inline-block mr-1 w-4 h-4 text-gray-500" />
             Energy Star Rating
           </label>
-          <input
-            type="text"
+          <select
             id="energyStarRating"
             value={energyStarRating}
             onChange={(e) => setEnergyStarRating(e.target.value)}
-            placeholder="e.g., 5-star"
             className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
-          />
+          >
+            <option value="">Select Rating</option>
+            {energyStarRatings.map((rating) => (
+              <option key={rating} value={rating}>
+                {rating}
+              </option>
+            ))}
+          </select>
         </motion.div>
 
         <motion.div variants={fadeItem}>
@@ -202,34 +219,58 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Energy Efficiency Rating (Grades) Dropdown */}
         <motion.div variants={fadeItem}>
           <label htmlFor="energyEfficiencyRating" className="block text-sm font-medium text-gray-700 mb-1">
             <BatteryCharging className="inline-block mr-1 w-4 h-4 text-gray-500" />
-            Energy Efficiency Rating
+            Energy Efficiency Grade
           </label>
-          <input
-            type="text"
+          <select
             id="energyEfficiencyRating"
             value={energyEfficiencyRating}
             onChange={(e) => setEnergyEfficiencyRating(e.target.value)}
-            placeholder="e.g., A++, B"
             className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
-          />
+          >
+            <option value="">Select Grade</option>
+            {energyEfficiencyGrades.map((grade) => (
+              <option key={grade} value={grade}>
+                {grade}
+              </option>
+            ))}
+          </select>
         </motion.div>
 
+        {/* Capacity Input with Unit Dropdown */}
         <motion.div variants={fadeItem}>
           <label htmlFor="capacity" className="block text-sm font-medium text-gray-700 mb-1">
             <Gauge className="inline-block mr-1 w-4 h-4 text-gray-500" />
             Capacity
           </label>
-          <input
-            type="text"
-            id="capacity"
-            value={capacity}
-            onChange={(e) => setCapacity(e.target.value)}
-            placeholder="e.g., 500L, 7kg"
-            className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
-          />
+          <div className="flex space-x-2 mt-1">
+            <input
+              type="number" // Changed to number for numeric input
+              id="capacity"
+              value={capacity}
+              onChange={(e) => setCapacity(e.target.value)}
+              placeholder="e.g., 500"
+              min="0"
+              step="0.01" // Allow decimal for capacity
+              className="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
+            />
+            <select
+              id="capacityUnit"
+              value={capacityUnit}
+              onChange={(e) => setCapacityUnit(e.target.value)}
+              className="block flex-shrink-0 px-2 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
+            >
+              <option value="">Unit</option>
+              {capacityUnits.map((unit) => (
+                <option key={unit} value={unit}>
+                  {unit}
+                </option>
+              ))}
+            </select>
+          </div>
         </motion.div>
       </div>
 

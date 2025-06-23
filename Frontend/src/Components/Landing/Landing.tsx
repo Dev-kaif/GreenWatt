@@ -1,4 +1,13 @@
 import { motion, AnimatePresence, useScroll, useTransform } from "motion/react";
+import {
+  SiReact,
+  SiTypescript,
+  SiTailwindcss,
+  SiNodedotjs,
+  SiPrisma,
+  SiSupabase,
+  SiLangchain,
+} from "react-icons/si";
 
 import {
   Leaf,
@@ -486,7 +495,7 @@ export default function GreenWattLanding() {
                 description:
                   "Import your energy bills or connect your smart meter. Our system supports multiple formats and providers.",
                 image:
-                  "https://placehold.co/400x300/e0e0e0/333333?text=Upload+Data",
+                  "https://plus.unsplash.com/premium_photo-1677093905912-a653c6301260?q=80&w=2064&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
               },
               {
                 step: "02",
@@ -494,15 +503,14 @@ export default function GreenWattLanding() {
                 description:
                   "Our AI analyzes your consumption patterns, identifies peak usage times, and spots inefficiencies.",
                 image:
-                  "https://placehold.co/400x300/d0d0d0/333333?text=Analyze+Patterns",
+                  "https://plus.unsplash.com/premium_photo-1681487767138-ddf2d67b35c1?q=80&w=1910&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
               },
               {
                 step: "03",
                 title: "Save & Optimize",
                 description:
                   "Follow personalized recommendations, track your progress, and watch your bills decrease month by month.",
-                image:
-                  "https://placehold.co/400x300/c0c0c0/333333?text=Save+%26+Optimize",
+                image: "public/dashboard.png",
               },
             ].map((step, index) => (
               <motion.div
@@ -516,7 +524,7 @@ export default function GreenWattLanding() {
                   <motion.img
                     src={step.image} // Using placeholder images
                     alt={step.title}
-                    className="w-full h-64 object-cover rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+                    className="w-full h-64 object-cover object-left rounded-2xl shadow-lg hover:shadow-xl transition-shadow duration-300"
                     whileHover={{ scale: 1.02 }}
                     transition={{ duration: 0.3 }}
                   />
@@ -844,41 +852,41 @@ export default function GreenWattLanding() {
             {[
               {
                 name: "React",
-                logo: "https://placehold.co/60x60/e0e0e0/333333?text=React",
+                logo: <SiReact className="text-sky-400" />,
               },
               {
                 name: "Tailwind CSS",
-                logo: "https://placehold.co/60x60/d0d0d0/333333?text=Tailwind",
+                logo: <SiTailwindcss className="text-teal-400" />,
               },
               {
-                name: "Firebase",
-                logo: "https://placehold.co/60x60/c0c0c0/333333?text=Firebase",
+                name: "Supabase",
+                logo: <SiSupabase className="text-green-700" />,
               },
               {
-                name: "MongoDB",
-                logo: "https://placehold.co/60x60/b0b0b0/333333?text=MongoDB",
-              },
-              {
-                name: "Vercel",
-                logo: "https://placehold.co/60x60/a0a0a0/333333?text=Vercel",
+                name: "Prisma",
+                logo: <SiPrisma />,
               },
               {
                 name: "Node.js",
-                logo: "https://placehold.co/60x60/909090/333333?text=Node.js",
+                logo: <SiNodedotjs className="text-green-500" />,
+              },
+              {
+                name: "Langchain",
+                logo: <SiLangchain />,
+              },
+              {
+                name: "Typescript",
+                logo: <SiTypescript className="text-blue-500" />,
               },
             ].map((tech, index) => (
               <motion.div
                 key={index}
                 variants={fadeInUp}
-                className="bg-accent p-6 rounded-2xl border border-primary/10 hover:shadow-md transition-shadow duration-300"
+                className="bg-accent p-6 rounded-2xl border border-primary/10 hover:shadow-md transition-shadow duration-300 flex flex-col items-center  gap-2"
                 whileHover={{ y: -2 }}
                 transition={{ duration: 0.2 }}
               >
-                <img
-                  src={tech.logo} // Using placeholder images
-                  alt={tech.name}
-                  className="h-12 w-12 mx-auto mb-3"
-                />
+                <div className="text-2xl">{tech.logo}</div>
                 <p className="text-sm font-medium text-secondary text-center">
                   {tech.name}
                 </p>
