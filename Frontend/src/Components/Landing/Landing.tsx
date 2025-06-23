@@ -510,7 +510,7 @@ export default function GreenWattLanding() {
                 title: "Save & Optimize",
                 description:
                   "Follow personalized recommendations, track your progress, and watch your bills decrease month by month.",
-                image: "../../../public/dashboard.png",
+                image: "https://res.cloudinary.com/dtgbnnv5p/image/upload/v1750672991/Screenshot_from_2025-06-23_14-54-23_n49dwm.png",
               },
             ].map((step, index) => (
               <motion.div
