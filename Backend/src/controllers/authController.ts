@@ -1,6 +1,9 @@
+// controller/authcontroller.ts
 import { Request, Response } from "express";
-import { supabase } from "../config/supabaseCLient";
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { JWT_SECRET } from "../config/config";
 
 const prisma = new PrismaClient();
 
@@ -22,44 +25,27 @@ export const signup = async (req: Request, res: Response) => {
       return;
     }
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          first_name: firstName,
-          last_name: lastName,
-        },
+    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
+
+    const newUser = await prisma.user.create({
+      data: {
+        email: email,
+        passwordHash: hashedPassword,
+        firstName: firstName,
+        lastName: lastName,
       },
     });
 
-    if (authError) {
-      res.status(400).json({ message: authError.message });
-      return;
-    }
-
-    let userInOurDb;
-    if (authData.user) {
-      userInOurDb = await prisma.user.create({
-        data: {
-          id: authData.user.id, // Use Supabase user ID as our User ID
-          email: authData.user.email!,
-          firstName: firstName,
-          lastName: lastName,
-        },
-      });
-    }
+    const token = jwt.sign(
+      { userId: newUser.id, email: newUser.email },
+      JWT_SECRET
+    );
 
     res.status(201).json({
       message:
-        "User registered successfully. Check your email for verification if required.",
-      user: userInOurDb
-        ? { id: userInOurDb.id, email: userInOurDb.email }
-        : null,
-      supabaseUser: authData.user
-        ? { id: authData.user.id, email: authData.user.email }
-        : null,
-      session: authData.session,
+        "User registered successfully. You are now logged in. (No email verification in this basic example)",
+      user: { id: newUser.id, email: newUser.email },
+      token: token,
     });
     return;
   } catch (error: any) {
@@ -82,40 +68,28 @@ export const login = async (req: Request, res: Response) => {
   }
 
   try {
-    // Authenticate user with Supabase Auth
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const user = await prisma.user.findUnique({
+      where: { email },
     });
 
-    if (error) {
-      res.status(401).json({ message: error.message });
+    if (!user || !user.passwordHash) {
+      res.status(401).json({ message: "Invalid credentials." });
       return;
     }
 
-    // If login is successful, you might want to fetch or update your internal User record
-    // For instance, update lastLoginAt, or ensure the user exists in your `User` table.
-    // In many cases, you'd rely on Supabase's session for user identification after login.
-    const userInOurDb = await prisma.user.findUnique({
-      where: { id: data.user?.id },
-    });
+    const passwordMatch = await bcrypt.compare(password, user.passwordHash);
 
-    if (!userInOurDb) {
-      // This scenario means a user logged in via Supabase but isn't in our `User` table.
-      // This might happen if they signed up via a different method (e.g., social login)
-      // or if our `User` table creation failed during signup.
-      // You might want to create the user here or handle this as an error.
-      console.warn(
-        `User with ID ${data.user?.id} found in Supabase Auth but not in our 'User' table.`
-      );
-      // Optionally create the user here if you expect them to always exist in your DB after auth
-      // Or redirect to profile completion.
+    if (!passwordMatch) {
+      res.status(401).json({ message: "Invalid credentials." });
+      return;
     }
+
+    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, {expiresIn: "1h",});
 
     res.status(200).json({
       message: "Login successful",
-      user: data.user ? { id: data.user.id, email: data.user.email } : null,
-      session: data.session, // Crucial for frontend to maintain session
+      user: { id: user.id, email: user.email },
+      token: token,
     });
     return;
   } catch (error: any) {
@@ -127,3 +101,4 @@ export const login = async (req: Request, res: Response) => {
     return;
   }
 };
+

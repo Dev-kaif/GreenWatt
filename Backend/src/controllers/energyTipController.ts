@@ -1,8 +1,7 @@
 // src/controllers/energyTipController.ts
 import { Request, Response } from 'express';
-// Assuming generatePersonalizedTips is the service that calls LangChain and Gemini
 import { generatePersonalizedTips } from '../services/tipGenerationService';
-import { PrismaClient } from '@prisma/client'; // Import PrismaClient to fetch historical tips
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient(); // Initialize PrismaClient
 

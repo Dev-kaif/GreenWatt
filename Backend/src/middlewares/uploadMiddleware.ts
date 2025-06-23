@@ -36,4 +36,4 @@ const upload = multer({
   fileFilter,
 });
 
-export const uploadCsv = upload.single("csvFile"); // name of the file input field
+export const uploadCsv = upload.single("csvFile"); 

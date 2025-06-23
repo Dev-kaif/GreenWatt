@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import { supabase } from "../config/supabaseCLient";
+import jwt from "jsonwebtoken";
+import { JWT_SECRET } from "../config/config";
 
 declare global {
   namespace Express {
@@ -27,32 +28,35 @@ export const protect = async (
   const token = authHeader.split(" ")[1];
 
   try {
-    // Verify the token using Supabase
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser(token);
-
-    if (error || !user) {
-      console.error("Auth verification error:", error?.message);
-      res.status(401).json({ message: "Invalid or expired token." });
-      return;
-    }
+    const decoded = jwt.verify(token, JWT_SECRET) as {
+      userId: string;
+      email: string;
+      iat: number;
+      exp: number;
+    };
 
     req.user = {
-      id: user.id,
-      email: user.email || undefined,
+      id: decoded.userId,
+      email: decoded.email || undefined,
     };
 
     next();
   } catch (error: any) {
     console.error("Authentication error:", error);
-    res
-      .status(500)
-      .json({
-        message: "Internal server error during authentication.",
-        error: error.message,
-      });
+
+    if (error instanceof jwt.TokenExpiredError) {
+      res.status(401).json({ message: "Token expired, please log in again." });
+      return;
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      res.status(401).json({ message: "Invalid token, authorization denied." });
+      return;
+    }
+
+    res.status(500).json({
+      message: "Internal server error during authentication.",
+      error: error.message,
+    });
     return;
   }
 };

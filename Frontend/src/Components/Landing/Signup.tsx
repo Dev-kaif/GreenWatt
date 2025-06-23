@@ -127,16 +127,24 @@ export default function SignupPage() {
         { withCredentials: true }
       );
 
-      // console.log("Signup successful:", response.data);
-      setSuccessMessage(
-        response.data.message ||
-          "Signup successful! Please check your email for verification if required."
-      );
+      // Check if the response contains a token
+      if (response.data && response.data.token) {
+        // Save the token to localStorage
+        localStorage.setItem("token", response.data.token);
+        setSuccessMessage("Signup successful! Redirecting to dashboard...");
 
-      // After a short delay, navigate to login page
-      setTimeout(() => {
-        navigate("/auth/login");
-      }, 3000); // Wait 3 seconds to show success message
+        setTimeout(() => {
+          navigate("/dashboard"); // Navigate to /dashboard
+        }, 1500);
+      } else {
+        setSuccessMessage(
+          response.data.message ||
+            "Signup successful! Please check your email for verification if required."
+        );
+        setTimeout(() => {
+          navigate("/auth/login");
+        }, 3000);
+      }
     } catch (err: any) {
       console.error("Signup failed:", err);
       if (err.response) {
@@ -209,10 +217,9 @@ export default function SignupPage() {
     return "Strong";
   };
 
-
-  const handleLoginroute = ()=>{
-    navigate("/auth/login")
-  }
+  const handleLoginroute = () => {
+    navigate("/auth/login");
+  };
 
   return (
     <div className="min-h-screen py-10 relative bg-white flex items-center justify-center p-4">
@@ -252,7 +259,7 @@ export default function SignupPage() {
           className="absolute inset-0"
           style={{
             backgroundImage: `radial-gradient(circle at 25% 25%, #32C686 0%, transparent 50%),
-                           radial-gradient(circle at 75% 75%, #0F3D3E 0%, transparent 50%)`,
+                                 radial-gradient(circle at 75% 75%, #0F3D3E 0%, transparent 50%)`,
           }}
         />
       </div>

@@ -50,10 +50,10 @@ export default function LoginPage() {
       );
 
       // console.log("Login successful:", response.data);
-      const { access_token } = response.data.session;
+      const { token } = response.data;
 
-      if (access_token) {
-        localStorage.setItem("token", access_token);
+      if (token) {
+        localStorage.setItem("token", token);
         navigate("/dashboard");
       } else {
         setError(

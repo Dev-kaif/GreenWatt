@@ -1,17 +1,18 @@
+// Assuming this is your generatePersonalizedTips file (e.g., src/services/personalizedTips.ts)
+
 import { PrismaClient } from "@prisma/client";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { RunnableSequence } from "@langchain/core/runnables";
-import { getSupabaseVectorStore } from "../utils/vectorStore";
-import { HumanMessage } from "@langchain/core/messages";
+import { getUserEmbeddingVectorStore } from "../utils/vectorStore";
 import { GEMINI_API_KEY } from "../config/config";
 
 const prisma = new PrismaClient();
 
 const chatModel = new ChatGoogleGenerativeAI({
   apiKey: GEMINI_API_KEY,
-  model: "gemini-2.0-flash",
+  model: "gemini-2.0-flash", // Using a generative model
   temperature: 0.3,
 });
 
@@ -30,14 +31,12 @@ function stripMarkdown(text: string): string {
     .trim();
 }
 
-
 const getUserContextForTips = async (userId: string) => {
   try {
-    // Fetch recent meter readings (e.g., last 3 months)
     const recentReadings = await prisma.meterReading.findMany({
       where: { userId },
       orderBy: { readingDate: "desc" },
-      take: 3, // Get last 3 months
+      take: 3,
       select: {
         readingDate: true,
         consumptionKWH: true,
@@ -45,7 +44,6 @@ const getUserContextForTips = async (userId: string) => {
       },
     });
 
-    // Fetch user's appliances
     const userAppliances = await prisma.appliance.findMany({
       where: { userId },
       select: {
@@ -57,7 +55,6 @@ const getUserContextForTips = async (userId: string) => {
       },
     });
 
-    // Fetch basic user profile info (household size, ecoGoals, targetReduction)
     const userProfile = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -74,7 +71,6 @@ const getUserContextForTips = async (userId: string) => {
       },
     });
 
-    // Format data into a concise string
     let contextString = "";
     if (userProfile) {
       contextString += `User Profile: Household Size: ${
@@ -121,13 +117,9 @@ const getUserContextForTips = async (userId: string) => {
   }
 };
 
-// This function now uses LangChain's vector store for similarity search
 const findSimilarUsersContext = async (userId: string, limit: number = 3) => {
   try {
-    const vectorStore = await getSupabaseVectorStore(
-      "user_embeddings",
-      "match_user_embeddings"
-    );
+    const vectorStore = await getUserEmbeddingVectorStore();
 
     // Fetch the current user's profile data to create a query embedding
     const user = await prisma.user.findUnique({
@@ -186,23 +178,25 @@ const findSimilarUsersContext = async (userId: string, limit: number = 3) => {
       currentUserProfileTextForEmbedding += `No appliances listed.`;
     }
 
-    const similarDocs = await vectorStore.similaritySearch(
-      currentUserProfileTextForEmbedding, 
+    const similarDocsWithScore = await vectorStore.similaritySearchWithScore(
+      currentUserProfileTextForEmbedding,
       limit + 1,
-      { userId_ne: userId }
+      {
+        userId: { not: userId }, 
+      }
     );
 
 
     let context = "";
-    const filteredDocs = similarDocs.filter(
-      (doc) => doc.metadata.userId !== userId
-    );
-    const relevantDocs = filteredDocs.slice(0, limit);
+    const relevantDocs = similarDocsWithScore
+      .filter(([doc]) => doc.metadata?.userId !== userId)
+      .slice(0, limit)
+      .map(([doc]) => doc);
 
     if (relevantDocs && relevantDocs.length > 0) {
       context = `\n\nInsights from similar users with similar energy patterns:\n`;
       relevantDocs.forEach((doc, index) => {
-        const similarUserId = doc.metadata.userId;
+        const similarUserId = doc.metadata?.userId;
         const similarUserContent = doc.pageContent;
         context += `- Similar user ${
           index + 1
@@ -236,7 +230,6 @@ export const generatePersonalizedTips = async (
     }
 
     const similarUsersContext = await findSimilarUsersContext(userId, 3);
-
 
     const promptTemplate = ChatPromptTemplate.fromMessages([
       [
@@ -280,11 +273,9 @@ export const generatePersonalizedTips = async (
 
     const generatedText = await chain.invoke({
       currentUserContext: currentUserContext.trim(),
-      // similarUsersContext is included directly in the prompt, so no need for a separate template variable
       userQuery: userQuery || "No specific question provided",
     });
 
-    // Optional: Clean up generic AI openers
     const cleanedText = stripMarkdown(
       generatedText
         .replace(/^okay[,.\s]*/i, "")
@@ -295,7 +286,6 @@ export const generatePersonalizedTips = async (
     const newTip = await prisma.energyTip.create({
       data: {
         userId: userId,
-        generalTipId: null,
         tipText: cleanedText,
       },
     });
