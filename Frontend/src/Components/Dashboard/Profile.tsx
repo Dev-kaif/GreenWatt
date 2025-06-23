@@ -21,6 +21,16 @@ import {
 import { motion, AnimatePresence, type TargetAndTransition, type Transition, type Variants } from "framer-motion"; // Import AnimatePresence, TargetAndTransition, Transition
 import axiosInstance from "../../utils/axios";
 
+// List of Indian States (You can expand this list)
+const indianStates = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
+  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand",
+  "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+  "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan",
+  "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
+  "Uttarakhand", "West Bengal"
+];
+
 // --- Animation Variants ---
 
 // General page entry animation
@@ -145,8 +155,8 @@ const Profile = () => {
       setFormData({
         firstName: user.firstName || "",
         lastName: user.lastName || "",
-        phoneNumber: user.phoneNumber || "",
-        householdSize: user.householdSize?.toString() || "1", // Ensure string for select
+        phoneNumber: user.phoneNumber ? user.phoneNumber.replace('+91', '') : "", // Remove +91 if present
+        householdSize: user.householdSize?.toString() || "1", // Ensure string for input type number
         address: user.address || "",
         city: user.city || "",
         state: user.state || "",
@@ -194,10 +204,13 @@ const Profile = () => {
     setSuccessMessage(null);
 
     try {
+      // Prepend +91 to phone number if it's not empty
+      const phoneNumberToSend = formData.phoneNumber ? `+91${formData.phoneNumber}` : undefined;
+
       const payload = {
         firstName: formData.firstName || undefined,
         lastName: formData.lastName || undefined,
-        phoneNumber: formData.phoneNumber || undefined,
+        phoneNumber: phoneNumberToSend,
         householdSize: formData.householdSize
           ? parseInt(formData.householdSize)
           : undefined, // Convert to number
@@ -245,10 +258,31 @@ const Profile = () => {
     >
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    // Specific handling for phoneNumber to ensure only numbers are entered after +91
+    if (name === "phoneNumber") {
+      const numericValue = value.replace(/\D/g, ''); // Remove non-digits
+      if (numericValue.length <= 10) {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: numericValue,
+        }));
+      }
+    } else if (name === "zipCode") {
+      const numericValue = value.replace(/\D/g, ''); // Remove non-digits
+      if (numericValue.length <= 6) {
+        setFormData((prev) => ({
+          ...prev,
+          [name]: numericValue,
+        }));
+      }
+    }
+     else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleEditClick = () => {
@@ -264,7 +298,7 @@ const Profile = () => {
       setFormData({
         firstName: profileData.firstName || "",
         lastName: profileData.lastName || "",
-        phoneNumber: profileData.phoneNumber || "",
+        phoneNumber: profileData.phoneNumber ? profileData.phoneNumber.replace('+91', '') : "",
         householdSize: profileData.householdSize?.toString() || "1",
         address: profileData.address || "",
         city: profileData.city || "",
@@ -436,16 +470,19 @@ const Profile = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Phone Number
                   </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <div className="relative flex items-center">
+                    <span className="absolute left-3 text-gray-700">+91</span>
+                    <Phone className="absolute left-12 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <motion.input
                       type="tel"
                       name="phoneNumber"
                       value={formData.phoneNumber}
                       onChange={handleFormChange}
                       disabled={!isEditing}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
-                      placeholder="+1 (555) 123-4567"
+                      className="w-full pl-20 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                      placeholder="e.g., 9876543210"
+                      pattern="[0-9]{10}" // Enforce 10 digits
+                      maxLength={10} // Restrict input to 10 characters
                       whileFocus={inputFocus}
                     />
                   </div>
@@ -493,29 +530,37 @@ const Profile = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     State
                   </label>
-                  <motion.input
-                    type="text"
-                    name="state"
-                    value={formData.state}
-                    onChange={handleFormChange}
-                    disabled={!isEditing}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
-                    placeholder="e.g., CA"
-                    whileFocus={inputFocus}
-                  />
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <motion.select
+                      name="state"
+                      value={formData.state}
+                      onChange={handleFormChange}
+                      disabled={!isEditing}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                      whileFocus={inputFocus}
+                    >
+                      <option value="">Select State</option>
+                      {indianStates.map((state) => (
+                        <option key={state} value={state}>{state}</option>
+                      ))}
+                    </motion.select>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Zip Code
                   </label>
                   <motion.input
-                    type="text"
+                    type="text" // Changed to text to allow pattern
                     name="zipCode"
                     value={formData.zipCode}
                     onChange={handleFormChange}
                     disabled={!isEditing}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
-                    placeholder="e.g., 90210"
+                    placeholder="e.g., 123456"
+                    pattern="[0-9]{6}" // Enforce 6 digits
+                    maxLength={6} // Restrict input to 6 characters
                     whileFocus={inputFocus}
                   />
                 </div>
@@ -528,21 +573,17 @@ const Profile = () => {
                   </label>
                   <div className="relative">
                     <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <motion.select
+                    <motion.input
+                      type="number" // Changed to type number
                       name="householdSize"
                       value={formData.householdSize}
                       onChange={handleFormChange}
                       disabled={!isEditing}
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all disabled:bg-gray-50 disabled:cursor-not-allowed"
+                      placeholder="e.g., 4"
+                      min="1" // Minimum value of 1
                       whileFocus={inputFocus}
-                    >
-                      <option value="">Select...</option>{" "}
-                      <option value="1">1 person</option>
-                      <option value="2">2 people</option>
-                      <option value="3">3 people</option>
-                      <option value="4">4 people</option>
-                      <option value="5">5+ people</option>
-                    </motion.select>
+                    />
                   </div>
                 </div>
 
