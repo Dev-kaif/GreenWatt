@@ -139,7 +139,7 @@ export default function SignupPage() {
       } else {
         setSuccessMessage(
           response.data.message ||
-            "Signup successful! Please check your email for verification if required."
+            "Signup successful!"
         );
         setTimeout(() => {
           navigate("/auth/login");

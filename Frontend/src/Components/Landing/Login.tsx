@@ -57,7 +57,7 @@ export default function LoginPage() {
         navigate("/dashboard");
       } else {
         setError(
-          "Login successful, but no access token was provided by the server."
+          "Login successful"
         );
       }
     } catch (err: any) {
