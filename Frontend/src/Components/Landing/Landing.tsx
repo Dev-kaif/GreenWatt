@@ -510,7 +510,7 @@ export default function GreenWattLanding() {
                 title: "Save & Optimize",
                 description:
                   "Follow personalized recommendations, track your progress, and watch your bills decrease month by month.",
-                image: "public/dashboard.png",
+                image: "../../../public/dashboard.png",
               },
             ].map((step, index) => (
               <motion.div
@@ -594,21 +594,21 @@ export default function GreenWattLanding() {
               {
                 name: "Sarah Johnson",
                 role: "Homeowner",
-                image: "https://placehold.co/80x80/e0e0e0/333333?text=SJ",
+                image: "https://images.unsplash.com/photo-1542909168-82c3e7fdca5c?q=80&w=1160&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                 rating: 5,
                 text: "GreenWatt helped us reduce our electricity bill by 35% in just 3 months. The insights are incredible!",
               },
               {
                 name: "Mike Chen",
                 role: "Environmental Consultant",
-                image: "https://placehold.co/80x80/d0d0d0/333333?text=MC",
+                image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=776&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                 rating: 5,
                 text: "As someone who cares about sustainability, this app is a game-changer. Easy to use and very effective.",
               },
               {
                 name: "Emily Rodriguez",
                 role: "Family of 4",
-                image: "https://placehold.co/80x80/c0c0c0/333333?text=ER",
+                image: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=774&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                 rating: 5,
                 text: "The personalized tips are spot-on. We've made simple changes that resulted in significant savings.",
               },
@@ -635,7 +635,7 @@ export default function GreenWattLanding() {
                   <img
                     src={testimonial.image} // Using placeholder images
                     alt={testimonial.name}
-                    className="w-12 h-12 rounded-full mr-4"
+                    className="w-12 h-12 rounded-full mr-4 object-cover"
                   />
                   <div>
                     <div className="font-semibold text-secondary">
