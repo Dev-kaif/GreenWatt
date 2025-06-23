@@ -68,8 +68,16 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
     e.preventDefault();
     setFormError(null);
 
-    if (!applianceType || !powerConsumption || parseFloat(powerConsumption) <= 0) {
-      setFormError("Please enter Appliance Type and a valid Power Consumption.");
+    // Updated validation: Appliance Type, Power Consumption, Age (Years), Energy Star Rating, and Avg. Daily Usage are now required
+    if (
+      !applianceType ||
+      !powerConsumption ||
+      parseFloat(powerConsumption) <= 0 ||
+      !ageYears || // Now required
+      !energyStarRating || // Now required
+      !avgDailyUsageHours // Now required
+    ) {
+      setFormError("Please fill out all required fields.");
       return;
     }
 
@@ -133,7 +141,7 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
         <motion.div variants={fadeItem}>
           <label htmlFor="modelName" className="block text-sm font-medium text-gray-700 mb-1">
             <Tag className="inline-block mr-1 w-4 h-4 text-gray-500" />
-            Model Name
+            Model Name (Optional)
           </label>
           <input
             type="text"
@@ -150,7 +158,7 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
         <motion.div variants={fadeItem}>
           <label htmlFor="ageYears" className="block text-sm font-medium text-gray-700 mb-1">
             <Calendar className="inline-block mr-1 w-4 h-4 text-gray-500" />
-            Age (Years)
+            Age (Years) <span className="text-red-500">*</span>
           </label>
           <input
             type="number"
@@ -159,6 +167,7 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
             onChange={(e) => setAgeYears(e.target.value)}
             placeholder="e.g., 5"
             min="0"
+            required // Now required
             className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
           />
         </motion.div>
@@ -166,7 +175,7 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
         <motion.div variants={fadeItem}>
           <label htmlFor="purchaseDate" className="block text-sm font-medium text-gray-700 mb-1">
             <Calendar className="inline-block mr-1 w-4 h-4 text-gray-500" />
-            Purchase Date
+            Purchase Date (Optional)
           </label>
           <input
             type="date"
@@ -183,12 +192,13 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
         <motion.div variants={fadeItem}>
           <label htmlFor="energyStarRating" className="block text-sm font-medium text-gray-700 mb-1">
             <Star className="inline-block mr-1 w-4 h-4 text-gray-500" />
-            Energy Star Rating
+            Energy Star Rating <span className="text-red-500">*</span>
           </label>
           <select
             id="energyStarRating"
             value={energyStarRating}
             onChange={(e) => setEnergyStarRating(e.target.value)}
+            required // Now required
             className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
           >
             <option value="">Select Rating</option>
@@ -223,7 +233,7 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
         <motion.div variants={fadeItem}>
           <label htmlFor="energyEfficiencyRating" className="block text-sm font-medium text-gray-700 mb-1">
             <BatteryCharging className="inline-block mr-1 w-4 h-4 text-gray-500" />
-            Energy Efficiency Grade
+            Energy Efficiency Grade (Optional)
           </label>
           <select
             id="energyEfficiencyRating"
@@ -244,17 +254,17 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
         <motion.div variants={fadeItem}>
           <label htmlFor="capacity" className="block text-sm font-medium text-gray-700 mb-1">
             <Gauge className="inline-block mr-1 w-4 h-4 text-gray-500" />
-            Capacity
+            Capacity (Optional)
           </label>
           <div className="flex space-x-2 mt-1">
             <input
-              type="number" // Changed to number for numeric input
+              type="number"
               id="capacity"
               value={capacity}
               onChange={(e) => setCapacity(e.target.value)}
               placeholder="e.g., 500"
               min="0"
-              step="0.01" // Allow decimal for capacity
+              step="0.01"
               className="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
             />
             <select
@@ -277,7 +287,7 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
       <motion.div variants={fadeItem}>
         <label htmlFor="avgDailyUsageHours" className="block text-sm font-medium text-gray-700 mb-1">
           <Clock className="inline-block mr-1 w-4 h-4 text-gray-500" />
-          Avg. Daily Usage (Hours)
+          Avg. Daily Usage (Hours) <span className="text-red-500">*</span>
         </label>
         <input
           type="number"
@@ -288,6 +298,7 @@ const AddApplianceForm: React.FC<AddApplianceFormProps> = ({
           step="0.1"
           min="0"
           max="24"
+          required // Now required
           className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 text-sm"
         />
       </motion.div>
