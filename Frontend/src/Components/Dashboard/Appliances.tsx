@@ -5,7 +5,6 @@ import { Plug, Zap, Clock, DollarSign, Plus, Edit, Trash2, XCircle, CheckCircle,
 import { motion, AnimatePresence, type Variants, type TargetAndTransition, type Transition } from 'framer-motion'; // Import AnimatePresence, TargetAndTransition, Transition
 import axiosInstance from '../../utils/axios';
 
-// --- Animation Variants ---
 const pageVariants:Variants = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
@@ -31,7 +30,7 @@ const itemVariants:Variants = {
 const staggerContainer = {
   animate: {
     transition: {
-      staggerChildren: 0.07, // Slightly faster stagger for more responsiveness
+      staggerChildren: 0.07, 
     },
   },
 };
@@ -42,7 +41,10 @@ const buttonPress: TargetAndTransition = {
   transition: { type: "spring", stiffness: 300, damping: 10 } as Transition
 };
 
-// --- Components ---
+const energyStarRatings = ["1-Star", "2-Star", "3-Star", "4-Star", "5-Star"];
+const energyEfficiencyGrades = ["A+++", "A++", "A+", "A", "B", "C", "D"];
+
+
 
 // MessageBox component
 const MessageBox = ({ message, type, onClose }: { message: string; type: "success" | "error"; onClose: () => void }) => (
@@ -178,6 +180,7 @@ const Appliances = () => {
     fetchAppliances();
   }, []);
 
+
   // --- Form Handlers ---
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -204,16 +207,24 @@ const Appliances = () => {
         purchaseDate: formData.purchaseDate || undefined,
       };
 
+      // Basic validation for required fields
+      if (
+        !payload.type ||
+        !payload.powerConsumptionWatts || payload.powerConsumptionWatts <= 0 ||
+        !payload.ageYears ||
+        !payload.energyStarRating ||
+        !payload.averageDailyUsageHours
+      ) {
+        setError("Please fill out all required fields.");
+        setIsSubmitting(false);
+        return;
+      }
+
+
       if (isEditing && currentApplianceId) {
          await axiosInstance.put(`/api/appliances/${currentApplianceId}`, payload);
         setSuccessMessage("Appliance updated successfully!");
       } else {
-        // Basic validation for type, as it's required by backend
-        if (!payload.type) {
-          setError("Appliance Type is required.");
-          setIsSubmitting(false);
-          return;
-        }
         await axiosInstance.post('/api/appliances', payload);
         setSuccessMessage("Appliance added successfully!");
       }
@@ -301,7 +312,7 @@ const Appliances = () => {
 
   const handleCloseApplianceFormModal = () => {
     setShowApplianceFormModal(false);
-    // Form reset handled within handleFormSubmit on success
+    // Form reset handled within handleFormSubmit on success (or on cancel)
   };
 
   // --- Helper Functions for UI ---
@@ -406,7 +417,7 @@ const Appliances = () => {
                   </motion.select>
                 </motion.div>
                 <motion.div variants={itemVariants}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="modelName">Model Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="modelName">Model Name (Optional)</label>
                   <motion.input
                     type="text"
                     id="modelName"
@@ -419,7 +430,7 @@ const Appliances = () => {
                   />
                 </motion.div>
                 <motion.div variants={itemVariants}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="ageYears">Age (Years)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="ageYears">Age (Years) <span className="text-red-500">*</span></label>
                   <motion.input
                     type="number"
                     id="ageYears"
@@ -429,11 +440,12 @@ const Appliances = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     placeholder="e.g., 5"
                     min="0"
+                    required
                     whileFocus={{ scale: 1.01, boxShadow: "0 0 0 4px rgba(74, 222, 128, 0.2)" }}
                   />
                 </motion.div>
                 <motion.div variants={itemVariants}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="purchaseDate">Purchase Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="purchaseDate">Purchase Date (Optional)</label>
                   <motion.input
                     type="date"
                     id="purchaseDate"
@@ -444,21 +456,30 @@ const Appliances = () => {
                     whileFocus={{ scale: 1.01, boxShadow: "0 0 0 4px rgba(74, 222, 128, 0.2)" }}
                   />
                 </motion.div>
+
+                {/* Energy Star Rating Dropdown - MODIFIED */}
                 <motion.div variants={itemVariants}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="energyStarRating">Energy Star Rating</label>
-                  <motion.input
-                    type="text"
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="energyStarRating">Energy Star Rating <span className="text-red-500">*</span></label>
+                  <motion.select
                     id="energyStarRating"
                     name="energyStarRating"
                     value={formData.energyStarRating}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                    placeholder="e.g., 5-star"
+                    required
                     whileFocus={{ scale: 1.01, boxShadow: "0 0 0 4px rgba(74, 222, 128, 0.2)" }}
-                  />
+                  >
+                    <option value="">Select Rating</option>
+                    {energyStarRatings.map((rating) => (
+                      <option key={rating} value={rating}>
+                        {rating}
+                      </option>
+                    ))}
+                  </motion.select>
                 </motion.div>
+
                 <motion.div variants={itemVariants}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="powerConsumptionWatts">Power Consumption (Watts)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="powerConsumptionWatts">Power Consumption (Watts) <span className="text-red-500">*</span></label>
                   <motion.input
                     type="number"
                     id="powerConsumptionWatts"
@@ -468,24 +489,33 @@ const Appliances = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     placeholder="e.g., 150"
                     step="0.1"
+                    required
                     whileFocus={{ scale: 1.01, boxShadow: "0 0 0 4px rgba(74, 222, 128, 0.2)" }}
                   />
                 </motion.div>
+
+                {/* Energy Efficiency Rating Dropdown - MODIFIED */}
                 <motion.div variants={itemVariants}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="energyEfficiencyRating">Energy Efficiency Rating</label>
-                  <motion.input
-                    type="text"
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="energyEfficiencyRating">Energy Efficiency Rating (Optional)</label>
+                  <motion.select
                     id="energyEfficiencyRating"
                     name="energyEfficiencyRating"
                     value={formData.energyEfficiencyRating}
                     onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                    placeholder="e.g., A++, B"
                     whileFocus={{ scale: 1.01, boxShadow: "0 0 0 4px rgba(74, 222, 128, 0.2)" }}
-                  />
+                  >
+                    <option value="">Select Grade</option>
+                    {energyEfficiencyGrades.map((grade) => (
+                      <option key={grade} value={grade}>
+                        {grade}
+                      </option>
+                    ))}
+                  </motion.select>
                 </motion.div>
+
                 <motion.div variants={itemVariants}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="averageDailyUsageHours">Avg. Daily Usage (Hours)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="averageDailyUsageHours">Avg. Daily Usage (Hours) <span className="text-red-500">*</span></label>
                   <motion.input
                     type="number"
                     id="averageDailyUsageHours"
@@ -495,11 +525,14 @@ const Appliances = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                     placeholder="e.g., 8.5"
                     step="0.1"
+                    min="0"
+                    max="24"
+                    required
                     whileFocus={{ scale: 1.01, boxShadow: "0 0 0 4px rgba(74, 222, 128, 0.2)" }}
                   />
                 </motion.div>
                 <motion.div variants={itemVariants} className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="capacity">Capacity</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="capacity">Capacity (Optional)</label>
                   <motion.input
                     type="text"
                     id="capacity"
@@ -638,13 +671,6 @@ const Appliances = () => {
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
               className="bg-white rounded-2xl shadow-card p-6 border border-gray-100 relative overflow-hidden"
             >
-              {/* Optional: Status badge - uncomment if 'status' field is active */}
-              {/* {appliance.status === 'active' && (
-                <div className="absolute top-0 right-0 bg-green-500 text-white text-xs px-3 py-1 rounded-bl-lg font-semibold">
-                  Active
-                </div>
-              )} */}
-
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center space-x-3">
                   <div className="text-3xl flex-shrink-0">
