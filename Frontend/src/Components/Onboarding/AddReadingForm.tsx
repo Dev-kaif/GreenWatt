@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/Components/Onboarding/AddReadingForm.tsx
 import React, { useState } from "react";
 import { motion, type Variants } from "framer-motion";
 import { Calendar, Zap, Cloud } from "lucide-react";

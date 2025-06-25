@@ -1,4 +1,3 @@
-// src/lib/vectorStore.ts
 
 import { PrismaClient, Prisma } from "@prisma/client";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";

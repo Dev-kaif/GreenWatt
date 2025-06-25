@@ -1,4 +1,3 @@
-// controller/authcontroller.ts
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -25,7 +24,7 @@ export const signup = async (req: Request, res: Response) => {
       return;
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds
+    const hashedPassword = await bcrypt.hash(password, 10); 
 
     const newUser = await prisma.user.create({
       data: {

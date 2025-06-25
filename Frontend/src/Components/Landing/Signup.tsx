@@ -14,6 +14,7 @@ import {
 import axios from "axios";
 import { BACKEND_URL } from "../../utils/Config";
 import { useNavigate } from "react-router-dom";
+import { MessageBox } from "../Ui/MessageBox";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -55,44 +56,6 @@ export default function SignupPage() {
 
   const navigate = useNavigate();
 
-  // Custom message box component (replaces alert)
-  const MessageBox = ({
-    message,
-    type,
-    onClose,
-  }: {
-    message: string;
-    type: "success" | "error";
-    onClose: () => void;
-  }) => (
-    <div
-      className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4`}
-    >
-      <div
-        className={`bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center ${
-          type === "success" ? "border-green-500" : "border-red-500"
-        } border-2`}
-      >
-        <p
-          className={`text-lg font-semibold mb-4 ${
-            type === "success" ? "text-green-700" : "text-red-700"
-          }`}
-        >
-          {message}
-        </p>
-        <button
-          onClick={onClose}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-            type === "success"
-              ? "bg-green-500 hover:bg-green-600"
-              : "bg-red-500 hover:bg-red-600"
-          } text-white`}
-        >
-          OK
-        </button>
-      </div>
-    </div>
-  );
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();

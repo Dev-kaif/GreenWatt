@@ -1,20 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/pages/Appliances.tsx
 import React, { useState, useEffect } from 'react';
 import { Plug, Zap, Clock, DollarSign, Plus, Edit, Trash2, XCircle, CheckCircle, CalendarDays, Star, Power, Sun} from 'lucide-react';
 import { motion, AnimatePresence, type Variants, type TargetAndTransition, type Transition } from 'framer-motion'; // Import AnimatePresence, TargetAndTransition, Transition
 import axiosInstance from '../../utils/axios';
+import { MessageBox } from '../Ui/MessageBox';
 
 const pageVariants:Variants = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
 };
 
-const messageBoxVariants:Variants = {
-  initial: { opacity: 0, y: -50 },
-  animate: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 150, damping: 20 } },
-  exit: { opacity: 0, y: -50, transition: { duration: 0.3 } },
-};
 
 const modalVariants:Variants = {
   initial: { opacity: 0, scale: 0.9 },
@@ -45,36 +40,6 @@ const energyStarRatings = ["1-Star", "2-Star", "3-Star", "4-Star", "5-Star"];
 const energyEfficiencyGrades = ["A+++", "A++", "A+", "A", "B", "C", "D"];
 
 
-
-// MessageBox component
-const MessageBox = ({ message, type, onClose }: { message: string; type: "success" | "error"; onClose: () => void }) => (
-  <AnimatePresence>
-    <motion.div
-      variants={messageBoxVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      className={`fixed top-4 left-1/2 -translate-x-1/2 bg-white p-4 rounded-lg shadow-xl z-50 flex items-center space-x-3 border-2 ${type === "success" ? "border-green-500" : "border-red-500"}`}
-    >
-      {type === "success" ? (
-        <CheckCircle className="w-6 h-6 text-green-500" />
-      ) : (
-        <XCircle className="w-6 h-6 text-red-500" />
-      )}
-      <p className={`text-lg font-semibold ${type === "success" ? "text-green-700" : "text-red-700"}`}>
-        {message}
-      </p>
-      <motion.button
-        onClick={onClose}
-        className={`ml-4 px-3 py-1 rounded-lg font-medium transition-colors ${type === "success" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"} text-white`}
-        whileHover={{ scale: 1.05 }}
-        whileTap={buttonPress}
-      >
-        OK
-      </motion.button>
-    </motion.div>
-  </AnimatePresence>
-);
 
 // ConfirmationModal component
 interface ConfirmationModalProps {
@@ -133,7 +98,7 @@ interface Appliance {
   energyEfficiencyRating?: string;
   averageDailyUsageHours?: number;
   capacity?: string;
-  status?: string; // Add status to interface
+  status?: string; 
 }
 
 const Appliances = () => {
@@ -203,7 +168,6 @@ const Appliances = () => {
         ageYears: formData.ageYears ? parseInt(formData.ageYears) : undefined,
         powerConsumptionWatts: formData.powerConsumptionWatts ? parseFloat(formData.powerConsumptionWatts) : undefined,
         averageDailyUsageHours: formData.averageDailyUsageHours ? parseFloat(formData.averageDailyUsageHours) : undefined,
-        // Convert empty string purchaseDate to undefined if optional
         purchaseDate: formData.purchaseDate || undefined,
       };
 
@@ -230,7 +194,7 @@ const Appliances = () => {
       }
 
       await fetchAppliances();
-      handleCloseApplianceFormModal(); // Close modal and reset form
+      handleCloseApplianceFormModal();
 
     } catch (err: any) {
       console.error('Error saving/updating appliance:', err);
@@ -261,7 +225,7 @@ const Appliances = () => {
       averageDailyUsageHours: appliance.averageDailyUsageHours?.toString() || '',
       capacity: appliance.capacity || '',
     });
-    setShowApplianceFormModal(true); // Open modal for editing
+    setShowApplianceFormModal(true);
   };
 
   const handleDeleteConfirm = (id: string) => {
@@ -273,14 +237,14 @@ const Appliances = () => {
     setShowConfirmModal(false);
     if (!itemToDeleteId) return;
 
-    setIsSubmitting(true); // Use this for delete too
+    setIsSubmitting(true); 
     setError(null);
     setSuccessMessage(null);
 
     try {
       await axiosInstance.delete(`/api/appliances/${itemToDeleteId}`);
       setSuccessMessage("Appliance deleted successfully!");
-      await fetchAppliances(); // Refresh the list
+      await fetchAppliances(); 
     } catch (err: any) {
       console.error('Error deleting appliance:', err);
       if (err.response) {
@@ -296,11 +260,11 @@ const Appliances = () => {
     }
   };
 
-  // --- Modal Control ---
+  //  Modal Control 
   const handleOpenAddApplianceModal = () => {
     setIsEditing(false);
     setCurrentApplianceId(null);
-    setFormData({ // Reset form for new entry
+    setFormData({
       type: '', modelName: '', ageYears: '', purchaseDate: '',
       energyStarRating: '', powerConsumptionWatts: '', energyEfficiencyRating: '',
       averageDailyUsageHours: '', capacity: '',
@@ -310,12 +274,11 @@ const Appliances = () => {
     setShowApplianceFormModal(true);
   };
 
+  // Form reset handled within handleFormSubmit on success (or on cancel)
   const handleCloseApplianceFormModal = () => {
     setShowApplianceFormModal(false);
-    // Form reset handled within handleFormSubmit on success (or on cancel)
   };
 
-  // --- Helper Functions for UI ---
   const getEfficiencyColor = (efficiency: string) => {
     if (!efficiency) return 'bg-gray-100 text-gray-800';
     const rating = efficiency.toUpperCase();

@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/pages/DataEntry.tsx
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Calendar,
@@ -16,6 +15,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import axiosInstance from "../../utils/axios";
+import { MessageBox } from "../Ui/MessageBox";
 
 // --- Utility function to calculate date ranges ---
 const getDateRangeForPeriod = (
@@ -69,48 +69,6 @@ const getDateRangeForPeriod = (
   };
 };
 
-// MessageBox component (with AnimatePresence for exit animation)
-const MessageBox = ({
-  message,
-  type,
-  onClose,
-}: {
-  message: string;
-  type: "success" | "error";
-  onClose: () => void;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: -20, scale: 0.95 }}
-    animate={{ opacity: 1, y: 0, scale: 1 }}
-    exit={{ opacity: 0, y: -20, scale: 0.95 }}
-    transition={{ duration: 0.2 }}
-    className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4`}
-  >
-    <div
-      className={`bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center ${
-        type === "success" ? "border-green-500" : "border-red-500"
-      } border-2`}
-    >
-      <p
-        className={`text-lg font-semibold mb-4 ${
-          type === "success" ? "text-green-700" : "text-red-700"
-        }`}
-      >
-        {message}
-      </p>
-      <button
-        onClick={onClose}
-        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-          type === "success"
-            ? "bg-green-500 hover:bg-green-600"
-            : "bg-red-500 hover:bg-red-600"
-        } text-white`}
-      >
-        OK
-      </button>
-    </div>
-  </motion.div>
-);
 
 // ConfirmationModal component (with AnimatePresence for exit animation)
 interface ConfirmationModalProps {

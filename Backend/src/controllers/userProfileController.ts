@@ -1,4 +1,3 @@
-// src/controllers/userProfileController.ts
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { updateUserEmbedding } from "../services/updateUserEmbedding";
@@ -117,13 +116,12 @@ export const updateUserProfile = async (req: Request, res: Response) => {
     res.status(200).json({
       message: "User profile updated successfully.",
       user: userWithoutPassword,
-      userProfile: updatedData.userProfile, // Return the updated userProfile including the onboardingComplete flag
+      userProfile: updatedData.userProfile,
     });
     return;
   } catch (error: any) {
     console.error("Error updating user profile:", error);
     if (error.code === "P2025") {
-      // Prisma error code for record not found (e.g., user doesn't exist for update)
       res
         .status(404)
         .json({ message: "User not found.", error: error.message });

@@ -1,9 +1,8 @@
-// src/controllers/energyTipController.ts
 import { Request, Response } from 'express';
 import { generatePersonalizedTips } from '../services/tipGenerationService';
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient(); // Initialize PrismaClient
+const prisma = new PrismaClient();
 
 // Controller for generating personalized tips (now can take a user query)
 export const generateTipsController = async (req: Request, res: Response) => {
@@ -17,14 +16,12 @@ export const generateTipsController = async (req: Request, res: Response) => {
       return;
     }
 
-    // Call the service function, passing the userQuery
-    // The service will handle integrating this into the LLM prompt
     const tips = await generatePersonalizedTips(userId, userQuery);
 
     res.status(200).json({
       message: 'Personalized energy tips generated successfully!',
       tipsCount: tips.length,
-      generatedTips: tips, // Renamed from 'tips' to 'generatedTips' for clarity
+      generatedTips: tips, 
     });
 
   } catch (error: any) {
@@ -32,13 +29,12 @@ export const generateTipsController = async (req: Request, res: Response) => {
     res.status(500).json({
       error: 'Failed to generate personalized tips.',
       details: error.message || 'An unexpected error occurred.',
-      // Optionally, provide fallback tips here if you want the frontend to always display something
       generatedTips: ["Failed to generate new tips. Please try again later."],
     });
   }
 };
 
-// NEW: Controller to get all historical energy tips for the authenticated user
+// Controller to get all historical energy tips for the authenticated user
 export const getTipsHistoryController = async (req: Request, res: Response) => {
   const userId = req.user?.id;
 

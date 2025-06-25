@@ -1,4 +1,3 @@
-// src/services/updateUserEmbedding.ts
 
 import { PrismaClient, Prisma } from "@prisma/client";
 import { embeddings } from "../utils/vectorStore";

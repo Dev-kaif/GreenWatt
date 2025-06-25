@@ -1,4 +1,3 @@
-// src/App.tsx (This file remains mostly as you provided it, now relying on the enhanced ProtectedRoute)
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import GreenWattLanding from "./Components/Landing/Landing";
 import LoginPage from "./Components/Landing/Login";
@@ -17,7 +16,6 @@ function App() {
         <Route path="/auth/signup" element={<SignupPage />} />
 
         {/* Protected Routes Wrapper */}
-        {/* ProtectedRoute will now internally handle redirects to /onboarding or /auth/login */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Index />} />
           <Route path="/onboarding" element={<OnboardingWizard/>} />

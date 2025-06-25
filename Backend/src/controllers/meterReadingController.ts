@@ -442,9 +442,6 @@ export const uploadMeterReadingsCsv = async (req: Request, res: Response) => {
       }
 
       try {
-        // Bulk upsert: Try to update if unique constraint matches, otherwise create
-        // Note: Prisma's createMany does not support upsert directly.
-        // We'll iterate and upsert, or you could consider a raw query for larger datasets.
         const createdReadings = [];
         const updatedReadings = [];
         for (const readingData of readingsToCreate) {
@@ -493,7 +490,6 @@ export const uploadMeterReadingsCsv = async (req: Request, res: Response) => {
 
         if (errors.length > 0) {
           res.status(207).json({
-            // 207 Multi-Status
             message:
               "CSV processing completed with some errors. Partial success.",
             uploadedCount: readingsToCreate.length - errors.length,
@@ -558,7 +554,7 @@ export const getMonthlyConsumptionSummary = async (
     });
 
     // Format the data for easier frontend consumption
-    const formattedSummary = monthlySummary.map((item) => ({
+    const formattedSummary = monthlySummary.map((item:any) => ({
       month: item.readingDate.toISOString().substring(0, 7), // Format as YYYY-MM
       totalConsumptionKWH: item._sum.consumptionKWH || 0,
       totalEmissionCO2kg: item._sum.emissionCO2kg || 0,

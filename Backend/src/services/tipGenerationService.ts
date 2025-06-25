@@ -1,4 +1,3 @@
-// Assuming this is your generatePersonalizedTips file (e.g., src/services/personalizedTips.ts)
 
 import { PrismaClient } from "@prisma/client";
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";

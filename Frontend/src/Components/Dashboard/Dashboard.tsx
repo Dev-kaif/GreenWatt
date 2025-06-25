@@ -27,8 +27,8 @@ import {
 } from "chart.js";
 import { motion, type Variants } from "motion/react";
 import axiosInstance from "../../utils/axios";
+import { MessageBox } from "../Ui/MessageBox";
 
-// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -41,49 +41,6 @@ ChartJS.register(
   ArcElement
 );
 
-// MessageBox component (re-used for consistency)
-const MessageBox = ({
-  message,
-  type,
-  onClose,
-}: {
-  message: string;
-  type: "success" | "error";
-  onClose: () => void;
-}) => (
-  <motion.div
-    initial={{ opacity: 0, y: -50 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -50 }}
-    className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4`}
-  >
-    <div
-      className={`bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center ${
-        type === "success" ? "border-primary" : "border-red-500"
-      } border-2`}
-    >
-      <p
-        className={`text-lg font-semibold mb-4 ${
-          type === "success" ? "text-primary" : "text-red-700"
-        }`}
-      >
-        {message}
-      </p>
-      <button
-        onClick={onClose}
-        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-          type === "success"
-            ? "bg-primary hover:bg-green-600"
-            : "bg-red-500 hover:bg-red-600"
-        } text-white`}
-      >
-        OK
-      </button>
-    </div>
-  </motion.div>
-);
-
-// --- Framer Motion Animation Variants ---
 
 // Parent container variants for staggered children animations
 const containerVariants: Variants = {

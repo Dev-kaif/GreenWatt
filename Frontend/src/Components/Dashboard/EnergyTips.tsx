@@ -1,35 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// src/pages/EnergyTips.tsx
 import { useState, useEffect } from 'react';
 import { Lightbulb, RefreshCw, Sparkles, AlertCircle, Send } from 'lucide-react';
 import { motion, type Transition } from 'framer-motion';
-import axiosInstance from '../../utils/axios'; // Adjust path if needed
+import axiosInstance from '../../utils/axios'; 
+import { MessageBox } from '../Ui/MessageBox';
 
-// MessageBox component (re-used for consistency)
-const MessageBox = ({ message, type, onClose }: { message: string; type: "success" | "error"; onClose: () => void }) => (
-  <motion.div
-    initial={{ opacity: 0, y: -50 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -50 }}
-    transition={{ duration: 0.3 }}
-    className={`fixed top-4 left-1/2 -translate-x-1/2 bg-white p-4 rounded-lg shadow-xl z-50 flex items-center space-x-3 ${type === "success" ? "border-green-500" : "border-red-500"} border-2`}
-  >
-    {type === "success" ? (
-      <Sparkles className="w-6 h-6 text-green-500" />
-    ) : (
-      <AlertCircle className="w-6 h-6 text-red-500" />
-    )}
-    <p className={`text-lg font-semibold ${type === "success" ? "text-green-700" : "text-red-700"}`}>
-      {message}
-    </p>
-    <button
-      onClick={onClose}
-      className={`ml-4 px-3 py-1 rounded-lg font-medium transition-colors ${type === "success" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"} text-white`}
-    >
-      OK
-    </button>
-  </motion.div>
-);
 
 // Animation variants (re-used for consistency and enhanced)
 const fadeInUp = {
@@ -41,7 +16,7 @@ const fadeInUp = {
 const staggerContainer = {
   animate: {
     transition: {
-      staggerChildren: 0.08, // Reduced stagger for faster appearance
+      staggerChildren: 0.08, 
     },
   },
 };
@@ -72,7 +47,7 @@ const EnergyTips = () => {
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [messageBox, setMessageBox] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  // --- Function to fetch all historical energy tips ---
+  //  Function to fetch all historical energy tips
   const fetchHistoricalTips = async () => {
     setIsLoadingHistory(true);
     setMessageBox(null);
@@ -87,7 +62,7 @@ const EnergyTips = () => {
     }
   };
 
-  // --- Function to generate a new energy tip based on query ---
+  // Function to generate a new energy tip based on query 
   const handleGenerateTipFromQuery = async () => {
     if (currentQueryInput.trim() === '' && !latestGeneratedTip) {
       setMessageBox({ message: "Please enter a query or click 'Generate Tip' for a general tip.", type: "error" });
@@ -141,6 +116,7 @@ const EnergyTips = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
         {/* Generate Tip by Query Section (left column) */}
         <motion.div variants={fadeInUp} className="bg-white rounded-2xl shadow-card p-6 flex flex-col h-[600px] border border-gray-100">
           <div className="flex items-center space-x-3 mb-6">
