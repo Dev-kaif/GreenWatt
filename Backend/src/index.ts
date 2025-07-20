@@ -14,6 +14,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.get("/api/ping", (req, res) => {
+  res.status(200).send("pong");
+});
+
 app.use(
   cors({
     origin: FRONTEND_URL,
